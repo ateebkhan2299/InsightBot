@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+{% block title %}Language Intelligence Explorer — InsightBot{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto py-2 space-y-8">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-800">
+        <div>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                <i class="fas fa-globe"></i> Language Intelligence
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight">
+                Multilingual News Distribution & Analysis
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-400 mt-1">
+                Deep dive metrics, topic densities, and source channels parsed across English, Arabic, and Russian.
+            </p>
+        </div>
+        
+        <div class="flex items-center gap-2.5 bg-slate-900 px-4 py-2 rounded-xl border border-slate-800 text-xs">
+            <span class="text-slate-400">Total Database Size:</span>
+            <strong class="text-white">{{ stats.total_articles }} Articles</strong>
+        </div>
+    </div>
+
+    <!-- Language Stream Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- ENGLISH STREAM -->
+        {% set en_stats = lang_stats.get('English', {'count': 0, 'percentage': 0.0, 'keywords': [], 'domains': []}) %}
+        <div class="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl flex flex-col justify-between group hover:border-blue-500/30 transition-all duration-300">
+            <div class="space-y-6">
+                <!-- Header -->
+                <div class="flex items-center justify-between pb-4 border-b border-slate-800/80">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-lg">
+                            🇬🇧
+                        </div>
+                        <div>
+                            <h3 class="text-base font-heading font-bold text-white">English Stream</h3>
+                            <span class="text-[10px] text-slate-400 uppercase tracking-wider">Latin Unicode</span>
+                        </div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                        {{ en_stats.percentage }}%
+                    </span>
+                </div>
+
+                <!-- Basic Stats -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Extracted</span>
+                        <div class="text-xl font-bold text-white mt-1">{{ en_stats.count }}</div>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Stopwords</span>
+                        <div class="text-xs font-semibold text-slate-300 mt-2">NLTK Standard</div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="space-y-1.5">
+                    <div class="flex justify-between text-[11px] font-medium text-slate-400">
+                        <span>Database Share</span>
+                        <span>{{ en_stats.count }} / {{ stats.total_articles }}</span>
+                    </div>
+                    <div class="w-full h-2 rounded-full bg-slate-950 overflow-hidden p-[1px] border border-slate-800">
+                        <div class="h-full rounded-full bg-blue-500" style="width: {{ en_stats.percentage }}%"></div>
+                    </div>
+                </div>
+
+                <!-- Top Keywords -->
+                <div class="space-y-2">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block"><i class="fas fa-tags mr-1"></i> Top Extracted Topics</span>
+                    <div class="flex flex-wrap gap-1.5">
+                        {% if en_stats.keywords %}
+                            {% for kw in en_stats.keywords %}
+                                <span class="px-2 py-1 rounded bg-slate-950 border border-slate-800 text-[11px] text-slate-300 font-medium hover:border-slate-700 transition-colors">
+                                    {{ kw }}
+                                </span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="text-xs text-slate-500 italic">No topics extracted yet</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Top Channels / Domains -->
+                <div class="space-y-2">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block"><i class="fas fa-link mr-1"></i> Top Channels</span>
+                    <ul class="text-xs text-slate-300 space-y-1.5">
+                        {% if en_stats.domains %}
+                            {% for dom in en_stats.domains %}
+                                <li class="flex items-center justify-between p-2 rounded bg-slate-950/40 border border-slate-800/50">
+                                    <span class="truncate font-medium text-slate-200"><i class="far fa-dot-circle text-blue-500 mr-2"></i>{{ dom }}</span>
+                                </li>
+                            {% endfor %}
+                        {% else %}
+                            <li class="text-slate-500 italic">No active domains</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            <a href="{{ url_for('api.news_explorer', lang='English') }}" 
+               class="mt-6 w-full py-2.5 text-center text-xs font-semibold rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-all duration-300 block">
+                Filter News Explorer &rarr;
+            </a>
+        </div>
+
+        <!-- ARABIC STREAM (RTL) -->
+        {% set ar_stats = lang_stats.get('Arabic', {'count': 0, 'percentage': 0.0, 'keywords': [], 'domains': []}) %}
+        <div class="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl flex flex-col justify-between group hover:border-emerald-500/30 transition-all duration-300">
+            <div class="space-y-6">
+                <!-- Header -->
+                <div class="flex items-center justify-between pb-4 border-b border-slate-800/80">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-lg">
+                            🇸🇦
+                        </div>
+                        <div>
+                            <h3 class="text-base font-heading font-bold text-white">Arabic Stream</h3>
+                            <span class="text-[10px] text-slate-400 uppercase tracking-wider">RTL UTF-8 Unicode</span>
+                        </div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        {{ ar_stats.percentage }}%
+                    </span>
+                </div>
+
+                <!-- Basic Stats -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Extracted</span>
+                        <div class="text-xl font-bold text-white mt-1">{{ ar_stats.count }}</div>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Stopwords</span>
+                        <div class="text-xs font-semibold text-slate-300 mt-2 font-arabic" dir="rtl">تصفية القاموس</div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="space-y-1.5">
+                    <div class="flex justify-between text-[11px] font-medium text-slate-400">
+                        <span>Database Share</span>
+                        <span>{{ ar_stats.count }} / {{ stats.total_articles }}</span>
+                    </div>
+                    <div class="w-full h-2 rounded-full bg-slate-950 overflow-hidden p-[1px] border border-slate-800">
+                        <div class="h-full rounded-full bg-emerald-500" style="width: {{ ar_stats.percentage }}%"></div>
+                    </div>
+                </div>
+
+                <!-- Top Keywords (RTL) -->
+                <div class="space-y-2">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block"><i class="fas fa-tags mr-1"></i> Top Extracted Topics</span>
+                    <div class="flex flex-wrap gap-1.5" dir="rtl">
+                        {% if ar_stats.keywords %}
+                            {% for kw in ar_stats.keywords %}
+                                <span class="px-2.5 py-1 rounded bg-slate-950 border border-slate-800 text-[11px] text-emerald-400 font-arabic hover:border-emerald-500/20 transition-colors">
+                                    {{ kw }}
+                                </span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="text-xs text-slate-500 italic">No topics extracted yet</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Top Channels / Domains -->
+                <div class="space-y-2">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block"><i class="fas fa-link mr-1"></i> Top Channels</span>
+                    <ul class="text-xs text-slate-300 space-y-1.5">
+                        {% if ar_stats.domains %}
+                            {% for dom in ar_stats.domains %}
+                                <li class="flex items-center justify-between p-2 rounded bg-slate-950/40 border border-slate-800/50">
+                                    <span class="truncate font-medium text-slate-200"><i class="far fa-dot-circle text-emerald-500 mr-2"></i>{{ dom }}</span>
+                                </li>
+                            {% endfor %}
+                        {% else %}
+                            <li class="text-slate-500 italic">No active domains</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            <a href="{{ url_for('api.news_explorer', lang='Arabic') }}" 
+               class="mt-6 w-full py-2.5 text-center text-xs font-semibold rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-all duration-300 block">
+                Filter News Explorer &rarr;
+            </a>
+        </div>
+
+        <!-- RUSSIAN STREAM -->
+        {% set ru_stats = lang_stats.get('Russian', {'count': 0, 'percentage': 0.0, 'keywords': [], 'domains': []}) %}
+        <div class="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl flex flex-col justify-between group hover:border-purple-500/30 transition-all duration-300">
+            <div class="space-y-6">
+                <!-- Header -->
+                <div class="flex items-center justify-between pb-4 border-b border-slate-800/80">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-lg">
+                            🇷🇺
+                        </div>
+                        <div>
+                            <h3 class="text-base font-heading font-bold text-white">Russian Stream</h3>
+                            <span class="text-[10px] text-slate-400 uppercase tracking-wider">Cyrillic Unicode</span>
+                        </div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                        {{ ru_stats.percentage }}%
+                    </span>
+                </div>
+
+                <!-- Basic Stats -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Extracted</span>
+                        <div class="text-xl font-bold text-white mt-1">{{ ru_stats.count }}</div>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+                        <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Stopwords</span>
+                        <div class="text-xs font-semibold text-slate-300 mt-2 font-cyrillic">Фильтрация слов</div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="space-y-1.5">
+                    <div class="flex justify-between text-[11px] font-medium text-slate-400">
+                        <span>Database Share</span>
+                        <span>{{ ru_stats.count }} / {{ stats.total_articles }}</span>
+                    </div>
+                    <div class="w-full h-2 rounded-full bg-slate-950 overflow-hidden p-[1px] border border-slate-800">
+                        <div class="h-full rounded-full bg-purple-500" style="width: {{ ru_stats.percentage }}%"></div>
+                    </div>
+                </div>
+
+                <!-- Top Keywords -->
+                <div class="space-y-2">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block"><i class="fas fa-tags mr-1"></i> Top Extracted Topics</span>
+                    <div class="flex flex-wrap gap-1.5">
+                        {% if ru_stats.keywords %}
+                            {% for kw in ru_stats.keywords %}
+                                <span class="px-2 py-1 rounded bg-slate-950 border border-slate-800 text-[11px] text-purple-400 font-cyrillic hover:border-purple-500/25 transition-colors">
+                                    {{ kw }}
+                                </span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="text-xs text-slate-500 italic">No topics extracted yet</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Top Channels / Domains -->
+                <div class="space-y-2">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block"><i class="fas fa-link mr-1"></i> Top Channels</span>
+                    <ul class="text-xs text-slate-300 space-y-1.5">
+                        {% if ru_stats.domains %}
+                            {% for dom in ru_stats.domains %}
+                                <li class="flex items-center justify-between p-2 rounded bg-slate-950/40 border border-slate-800/50">
+                                    <span class="truncate font-medium text-slate-200"><i class="far fa-dot-circle text-purple-500 mr-2"></i>{{ dom }}</span>
+                                </li>
+                            {% endfor %}
+                        {% else %}
+                            <li class="text-slate-500 italic">No active domains</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            <a href="{{ url_for('api.news_explorer', lang='Russian') }}" 
+               class="mt-6 w-full py-2.5 text-center text-xs font-semibold rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-all duration-300 block">
+                Filter News Explorer &rarr;
+            </a>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

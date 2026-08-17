@@ -1,0 +1,56 @@
+{
+    "title_selectors": [
+        "meta[property='og:title']",
+        "h1",
+        "h2",
+        "h1.title",
+        "h1.headline",
+        "h1.article-title",
+        "h1.entry-title",
+        "h2.title",
+        "div.article-title"
+    ],
+    "body_selectors": [
+        "div",
+        "article",
+        "main",
+        "div.article-body",
+        "div.content",
+        "div.post-content",
+        "div.entry-content",
+        "div.story-body",
+        "section.article-content"
+    ],
+    "date_selectors": [
+        "time",
+        "time[datetime]",
+        "span.date",
+        "span.published",
+        "div.publication-date",
+        "meta[property='article:published_time']",
+        "meta[name='pubdate']"
+    ],
+    "training_stats": {
+        "pages_trained": 30,
+        "trained_at": "2026-08-15T09:14:25.316537",
+        "title_frequencies": {
+            "meta[property='og:title']": 25,
+            "h1": 20,
+            "h2": 4,
+            "h1.sr-only": 2,
+            "h1.NestedNavigation-styles__PageTitleStyled-sc-a1ed20b4-3": 1,
+            "h1.erTOKY": 1,
+            "h1.headline__text": 1,
+            "h1.vossi-headline__text": 1,
+            "h1.PageList-header-title": 1,
+            "h1.mb-4": 1
+        },
+        "body_frequencies": {
+            "div": 13,
+            "main": 2,
+            "div.layout__content-wrapper": 1,
+            "div.layout-no-rail__content-wrapper": 1,
+            "div.main-layout": 1
+        }
+    }
+}

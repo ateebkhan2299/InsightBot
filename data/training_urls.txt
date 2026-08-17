@@ -1,0 +1,51 @@
+# ============================================================
+# InsightBot - Training Dataset URLs (40 Websites)
+# 40 Real Multilingual News & Blog Websites
+# Languages: English (20), Arabic (10), Russian (10)
+# ============================================================
+
+# --- ENGLISH NEWS WEBSITES (20) ---
+https://www.bbc.com/news/world
+https://edition.cnn.com/world
+https://www.theguardian.com/international
+https://www.reuters.com/world/
+https://apnews.com/world-news
+https://www.aljazeera.com/news/
+https://time.com/section/world/
+https://www.npr.org/sections/news/
+https://www.nbcnews.com/world
+https://www.cbsnews.com/world/
+https://www.techcrunch.com
+https://www.wired.com/news/
+https://arstechnica.com
+https://www.theatlantic.com
+https://www.huffpost.com/news/world-news
+https://www.washingtonpost.com/world/
+https://www.usatoday.com/news/world/
+https://abcnews.go.com/International
+https://www.forbes.com/world/
+https://www.independent.co.uk/news/world
+
+# --- ARABIC NEWS WEBSITES (10) ---
+https://www.aljazeera.net/news/
+https://arabic.rt.com/
+https://www.bbc.com/arabic/world
+https://www.france24.com/ar/
+https://www.alarabiya.net/
+https://www.skynewsarabia.com/world
+https://www.albawabhnews.com/
+https://www.alhurra.com/
+https://www.euronews.com/ar/news/
+https://www.aa.com.tr/ar/
+
+# --- RUSSIAN NEWS WEBSITES (10) ---
+https://www.rt.com/russia/
+https://ria.ru/
+https://tass.ru/
+https://www.interfax.ru/
+https://www.rbc.ru/
+https://meduza.io/
+https://www.gazeta.ru/
+https://iz.ru/
+https://lenta.ru/
+https://www.1tv.ru/news

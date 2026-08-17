@@ -1,0 +1,17 @@
+venv/
+.venv/
+.deps/
+__pycache__/
+*.pyc
+.env
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/training/*
+!data/training/.gitkeep
+data/testing/*
+!data/testing/.gitkeep
+data/output/*
+!data/output/.gitkeep
+.pytest_cache/

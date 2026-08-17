@@ -1,0 +1,62 @@
+[
+  {
+    "url": "https://www.bbc.com/news/world",
+    "language": "English",
+    "expected_title_contains": "BBC",
+    "expected_body_min_words": 50
+  },
+  {
+    "url": "https://edition.cnn.com/world",
+    "language": "English",
+    "expected_title_contains": "CNN",
+    "expected_body_min_words": 50
+  },
+  {
+    "url": "https://apnews.com/world-news",
+    "language": "English",
+    "expected_title_contains": "AP",
+    "expected_body_min_words": 50
+  },
+  {
+    "url": "https://arstechnica.com",
+    "language": "English",
+    "expected_title_contains": "Ars",
+    "expected_body_min_words": 50
+  },
+  {
+    "url": "https://www.npr.org/sections/news/",
+    "language": "English",
+    "expected_title_contains": "NPR",
+    "expected_body_min_words": 50
+  },
+  {
+    "url": "https://www.aljazeera.net/news/",
+    "language": "Arabic",
+    "expected_title_contains": "\u0627\u0644\u062c\u0632\u064a\u0631\u0629",
+    "expected_body_min_words": 20
+  },
+  {
+    "url": "https://www.alarabiya.net/",
+    "language": "Arabic",
+    "expected_title_contains": "\u0627\u0644\u0639\u0631\u0628\u064a\u0629",
+    "expected_body_min_words": 20
+  },
+  {
+    "url": "https://www.skynewsarabia.com/world",
+    "language": "Arabic",
+    "expected_title_contains": "Sky",
+    "expected_body_min_words": 20
+  },
+  {
+    "url": "https://ria.ru/",
+    "language": "Russian",
+    "expected_title_contains": "\u0420\u0418\u0410",
+    "expected_body_min_words": 20
+  },
+  {
+    "url": "https://meduza.io/",
+    "language": "Russian",
+    "expected_title_contains": "Meduza",
+    "expected_body_min_words": 20
+  }
+]

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: var(--space-4);">
+    <div>
+        <h1 class="page-title">News Intelligence</h1>
+        <p class="page-subtitle">Browse, search, and filter extracted intelligence.</p>
+    </div>
+    
+    <!-- Filters -->
+    <div style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
+        <!-- Search -->
+        <form method="GET" action="{{ url_for('api.articles') }}" style="display: flex; gap: var(--space-2);">
+            <div style="position: relative;">
+                <i class="fas fa-search" style="position: absolute; left: 12px; top: 12px; color: var(--text-muted);"></i>
+                <input type="text" name="q" placeholder="Search keywords..." value="{{ query or '' }}" class="form-control" style="padding-left: 36px; width: 250px;">
+            </div>
+            
+            <select name="lang" class="form-control" style="width: 150px;">
+                <option value="">All Languages</option>
+                <option value="English" {% if lang == 'English' %}selected{% endif %}>English</option>
+                <option value="Arabic" {% if lang == 'Arabic' %}selected{% endif %}>Arabic</option>
+                <option value="Russian" {% if lang == 'Russian' %}selected{% endif %}>Russian</option>
+            </select>
+            
+            <button type="submit" class="btn btn-primary">Filter</button>
+            
+            {% if query or lang %}
+                <a href="{{ url_for('api.articles') }}" class="btn btn-outline" title="Clear Filters"><i class="fas fa-times"></i></a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="card" style="padding: 0; overflow: hidden; background: transparent; border: none; box-shadow: none;">
+    {% if articles %}
+        <div style="display: grid; gap: var(--space-4);">
+            {% for article in articles %}
+                <div class="card" style="display: flex; flex-direction: column; transition: transform 0.2s ease, box-shadow 0.2s ease; {% if article.language == 'Arabic' %}direction: rtl; text-align: right;{% endif %}">
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2); {% if article.language == 'Arabic' %}direction: ltr; text-align: right;{% endif %}">
+                        <div style="display: flex; gap: var(--space-2); align-items: center;">
+                            <span class="badge" style="background: var(--info-bg); color: var(--primary);">{{ article.language }}</span>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);"><i class="far fa-calendar-alt"></i> {{ article.publication_date or 'Unknown Date' }}</span>
+                        </div>
+                        <button class="icon-btn" style="width: 30px; height: 30px;" title="Save Article"><i class="far fa-bookmark"></i></button>
+                    </div>
+                    
+                    <a href="{{ url_for('api.article_detail', title=article.title) }}" style="text-decoration: none;">
+                        <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-2); line-height: 1.4;">
+                            {{ article.title }}
+                        </h2>
+                    </a>
+                    
+                    <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: var(--space-4); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                        {{ article.body }}
+                    </p>
+                    
+                    <div style="margin-top: auto; padding-top: var(--space-3); border-top: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; {% if article.language == 'Arabic' %}direction: ltr;{% endif %}">
+                        <div style="display: flex; align-items: center; gap: var(--space-2); font-size: 0.85rem;">
+                            <img src="https://www.google.com/s2/favicons?domain={{ article.source_url }}&sz=32" alt="Source Icon" style="width: 16px; height: 16px; border-radius: 50%;">
+                            <a href="{{ article.source_url }}" target="_blank" style="color: var(--text-muted);">Original Source <i class="fas fa-external-link-alt" style="font-size: 0.7rem;"></i></a>
+                        </div>
+                        <a href="{{ url_for('api.article_detail', title=article.title) }}" class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Read <i class="fas fa-arrow-{% if article.language == 'Arabic' %}left{% else %}right{% endif %}"></i></a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card" style="text-align: center; padding: var(--space-8);">
+            <div style="font-size: 4rem; color: var(--border); margin-bottom: var(--space-4);"><i class="far fa-folder-open"></i></div>
+            <h3 style="font-size: 1.5rem; margin-bottom: var(--space-2);">No articles found</h3>
+            <p style="color: var(--text-secondary); margin-bottom: var(--space-4);">We couldn't find any intelligence matching your criteria.</p>
+            {% if query or lang %}
+                <a href="{{ url_for('api.articles') }}" class="btn btn-primary">Clear All Filters</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}
