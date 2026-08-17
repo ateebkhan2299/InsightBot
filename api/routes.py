@@ -19,7 +19,7 @@ api_bp = Blueprint('api', __name__)
 @api_bp.before_request
 def enforce_route_authorization():
     # Public views that guests can access
-    public_endpoints = ['api.login', 'api.register', 'api.logout', 'static']
+    public_endpoints = ['api.login', 'api.register', 'api.logout', 'api.cron_scrape', 'static']
     
     endpoint = request.endpoint
     if not endpoint or endpoint in public_endpoints:
@@ -866,3 +866,30 @@ def approve_user(user_id):
         flash('User account approved successfully.', 'success')
         
     return redirect(url_for('api.admin_dashboard'))
+
+
+@api_bp.route('/api/cron-scrape', methods=['GET', 'POST'])
+def cron_scrape():
+    """
+    Cron endpoint for serverless deployment (Vercel Cron).
+    Triggers scraping for all active websites sequentially.
+    """
+    # Simple security verification: check token in query parameters
+    cron_token = request.args.get('token')
+    expected_token = os.getenv('CRON_TOKEN', 'insightbot-cron-default-token')
+    if cron_token != expected_token:
+         return jsonify({"success": False, "error": "Unauthorized cron request"}), 401
+         
+    from scheduler.scheduler import scrape_website_job
+    active_sources = source_repository.get_all_sources()
+    
+    results = []
+    for site in active_sources:
+        if site.get('active', True):
+            try:
+                scrape_website_job(site)
+                results.append({"url": site.get('url'), "status": "success"})
+            except Exception as e:
+                results.append({"url": site.get('url'), "status": "error", "message": str(e)})
+                
+    return jsonify({"success": True, "results": results}), 200

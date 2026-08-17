@@ -42,7 +42,9 @@ def create_app():
         logger.warning("MongoDB initial connection failed. The app will retry on request.")
 
     # ── Background Scheduler Initialization ──────────────────────────────────
-    if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+    if os.environ.get('VERCEL') == '1' or os.environ.get('VERCEL_ENV'):
+        logger.info("Serverless Vercel environment detected. Background scheduler thread bypassed.")
+    elif not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         logger.info("Starting background automation scheduler daemon...")
         try:
             from scheduler.scheduler import bot_scheduler
@@ -104,11 +106,12 @@ def create_app():
 
     return app
 
+app = create_app()
+
 if __name__ == '__main__':
-    application = create_app()
     print("\n" + "=" * 65)
     print("   InsightBot - Multilingual News Intelligence System")
     print("   Running locally on: http://127.0.0.1:5000")
     print("   UI Tech Stack: Flask + Jinja2 + Tailwind CSS (via CDN)")
     print("=" * 65 + "\n")
-    application.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
