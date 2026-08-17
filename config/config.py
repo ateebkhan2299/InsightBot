@@ -17,8 +17,12 @@ class Config:
     OUTPUT_DATA_DIR = os.path.join(DATA_DIR, 'output')
     
     # Ensure directories exist
-    os.makedirs(RAW_DATA_DIR, exist_ok=True)
-    os.makedirs(OUTPUT_DATA_DIR, exist_ok=True)
+    try:
+        os.makedirs(RAW_DATA_DIR, exist_ok=True)
+        os.makedirs(OUTPUT_DATA_DIR, exist_ok=True)
+    except OSError:
+        # Fallback for read-only serverless filesystems (e.g., Vercel)
+        pass
     
     # Scheduler
     SCRAPE_INTERVAL_HOURS = int(os.getenv('SCRAPE_INTERVAL_HOURS', 24))
