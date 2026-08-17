@@ -17,7 +17,7 @@ class MongoDBConnection:
             self.db = self.client[self.db_name]
             logging.info(f"Connected to MongoDB database: {self.db_name}")
             return True
-        except ConnectionFailure as e:
+        except Exception as e:
             logging.error(f"MongoDB connection failed: {e}")
             self.client = None
             self.db = None
