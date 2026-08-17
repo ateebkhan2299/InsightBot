@@ -13,12 +13,11 @@ class MongoDBConnection:
     def connect(self):
         try:
             self.client = MongoClient(self.uri, serverSelectionTimeoutMS=5000)
-            self.client.admin.command('ping')  # Verify connection
             self.db = self.client[self.db_name]
-            logging.info(f"Connected to MongoDB database: {self.db_name}")
+            logging.info(f"Initialized MongoDB connection: {self.db_name}")
             return True
         except Exception as e:
-            logging.error(f"MongoDB connection failed: {e}")
+            logging.error(f"MongoDB connection initialization failed: {e}")
             self.client = None
             self.db = None
             return False
