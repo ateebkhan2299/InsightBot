@@ -28,9 +28,6 @@ class HTMLCleaner:
 
     @staticmethod
     def get_text_from_element(element) -> str:
-        """
-        Extracts and normalizes text from a BeautifulSoup element.
-        """
         if not element:
             return ""
         text = element.get_text(separator=' ')
@@ -38,8 +35,5 @@ class HTMLCleaner:
         
     @staticmethod
     def normalize_whitespace(text: str) -> str:
-        """
-        Cleans up excessive whitespace and normalizes it.
-        """
         text = re.sub(r'\s+', ' ', text)
         return text.strip()

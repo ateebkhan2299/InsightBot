@@ -1,18 +1,9 @@
-"""
-InsightBot — Modern Multilingual News Intelligence System
-==========================================================
-Flask Application Entry Point
-
-Features:
-  - Backend integration with MongoDB database
-  - Clean Jinja2 template environment with custom formatting filters
-  - Modular blueprint architecture (routes, auth, scraper, analytics)
-  - Full support for English, Arabic (RTL), and Russian (Cyrillic)
-  - Tableau iframe dashboard integration
-"""
+# InsightBot — Flask application entry point.
+# Registers blueprints, starts the DB connection, and launches the background scheduler.
 
 import os
 import sys
+import secrets
 import logging
 from flask import Flask, render_template
 from config.config import config
@@ -30,11 +21,16 @@ def create_app():
     """Application factory for InsightBot Flask App."""
     app = Flask(__name__)
     app.config.from_object(config)
-    
+
     # Ensure secret key is configured for sessions & flash messages
     if not app.secret_key:
-        app.secret_key = os.getenv("SECRET_KEY", "insightbot-secure-key-2026")
-    
+        env_key = os.getenv("SECRET_KEY")
+        if env_key:
+            app.secret_key = env_key
+        else:
+            app.secret_key = secrets.token_hex(32)
+            logger.warning("No SECRET_KEY set — generated random key. Sessions will not persist across restarts.")
+
     # ── Database Initialization ──────────────────────────────────────────────
     logger.info("Initializing MongoDB connection...")
     connected = db_connection.connect()
@@ -44,6 +40,8 @@ def create_app():
     # ── Background Scheduler Initialization ──────────────────────────────────
     if os.environ.get('VERCEL') == '1' or os.environ.get('VERCEL_ENV'):
         logger.info("Serverless Vercel environment detected. Background scheduler thread bypassed.")
+    elif app.config.get('TESTING'):
+        logger.info("Testing environment detected. Background scheduler thread bypassed.")
     elif not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         logger.info("Starting background automation scheduler daemon...")
         try:
@@ -96,22 +94,22 @@ def create_app():
     app.register_blueprint(api_bp)
 
     # ── Global Error Handlers ────────────────────────────────────────────────
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template('error.html', error_code=403, error_title="Access Denied", error_message="You don't have permission to view this page."), 403
+
     @app.errorhandler(404)
     def page_not_found(e):
-        return render_template('base.html', error_title="404 — Page Not Found", error_message="The requested news intelligence page could not be located."), 404
+        return render_template('error.html', error_code=404, error_title="Page Not Found", error_message="The requested page could not be located."), 404
 
     @app.errorhandler(500)
     def internal_server_error(e):
-        return render_template('base.html', error_title="500 — Server Error", error_message="An unexpected error occurred while processing intelligence data."), 500
+        return render_template('error.html', error_code=500, error_title="Server Error", error_message="An unexpected error occurred while processing your request."), 500
 
     return app
 
 app = create_app()
 
 if __name__ == '__main__':
-    print("\n" + "=" * 65)
-    print("   InsightBot - Multilingual News Intelligence System")
-    print("   Running locally on: http://127.0.0.1:5000")
-    print("   UI Tech Stack: Flask + Jinja2 + Tailwind CSS (via CDN)")
-    print("=" * 65 + "\n")
+    print("InsightBot running on http://127.0.0.1:5000")
     app.run(host='0.0.0.0', port=5000, debug=True)

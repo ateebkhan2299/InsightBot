@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
 import re
-from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 from .pattern_mining import PatternMiner
 from preprocessing.cleaner import HTMLCleaner
@@ -13,7 +12,7 @@ class ArticleExtractor:
         self.cleaner = HTMLCleaner()
         self.normalizer = TextNormalizer()
 
-    def extract(self, raw_html: str, source_url: str = "") -> Dict[str, Any]:
+    def extract(self, raw_html: str, source_url: str = "") -> dict:
         """
         Extracts structured data from raw HTML using pattern-based rules.
         """
@@ -40,7 +39,7 @@ class ArticleExtractor:
             "extraction_method": "pattern-based"
         }
 
-    def _extract_title(self, soup: BeautifulSoup) -> str:
+    def _extract_title(self, soup: BeautifulSoup) -> str:  # noqa: E501
         for selector in self.miner.rules.get("title_selectors", []):
             elements = soup.select(selector)
             if elements:
@@ -61,13 +60,7 @@ class ArticleExtractor:
         return fallback.get_text().strip() if fallback else "Unknown Title"
 
     def _extract_body(self, soup: BeautifulSoup) -> str:
-        """
-        Layered body extraction strategy (SRS Pattern-Mining approach):
-        Layer 1: Semantic HTML tags (article, main, [role=main]) 
-        Layer 2: Rule-based selectors from pattern_mining rules
-        Layer 3: Paragraph-density analysis - find container with most <p> text
-        Layer 4: Largest div fallback
-        """
+        # Four-layer extraction: semantic tags → rule selectors → paragraph density → largest div
         
         # Layer 1: Try semantic HTML5 tags first (most reliable signal)
         for semantic_tag in ['article', 'main', '[role="main"]', '[role="article"]']:

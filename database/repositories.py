@@ -6,8 +6,10 @@ import os
 import re
 import hashlib
 import logging
+import datetime
 from collections import Counter
 from config.config import config
+from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
 
 logger = logging.getLogger(__name__)
 
@@ -256,8 +258,13 @@ class ArticleRepository:
                 "avg_word_count": 0
             }
 
-        all_docs = list(coll.find({}, {"_id": 0, "title": 1, "body": 1, "language": 1, "extracted_at": 1, "source_url": 1}))
-        total_count = len(all_docs)
+        try:
+            total_count = coll.count_documents({})
+        except Exception:
+            total_count = 0
+        all_docs = list(coll.find({}, {"_id": 0, "title": 1, "body": 1, "language": 1, "extracted_at": 1, "source_url": 1}).limit(250))
+        if total_count == 0:
+            total_count = len(all_docs)
 
         lang_counter = Counter()
         date_counter = Counter()

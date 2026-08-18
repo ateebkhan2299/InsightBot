@@ -14,26 +14,24 @@ from scraper.export_csv import export_for_tableau
 logger = logging.getLogger("InsightBot.Scheduler")
 
 def get_next_scrape_time(schedule_str: str, base_time=None) -> datetime:
-    """Calculates the next scraping datetime based on config frequency string."""
+    """Calculates the next scraping time based on a schedule frequency string."""
     if not base_time:
         base_time = datetime.utcnow()
-    schedule_str = str(schedule_str).lower().strip()
-    if "15" in schedule_str:
-        return base_time + timedelta(minutes=15)
-    elif "30" in schedule_str:
-        return base_time + timedelta(minutes=30)
-    elif "hour" in schedule_str or "1h" == schedule_str or "hourly" in schedule_str:
-        return base_time + timedelta(hours=1)
-    elif "3h" in schedule_str or "3 hours" in schedule_str:
-        return base_time + timedelta(hours=3)
-    elif "6h" in schedule_str or "6 hours" in schedule_str:
-        return base_time + timedelta(hours=6)
-    elif "12h" in schedule_str or "12 hours" in schedule_str:
-        return base_time + timedelta(hours=12)
-    elif "weekly" in schedule_str:
-        return base_time + timedelta(days=7)
-    else:  # default daily
-        return base_time + timedelta(days=1)
+    s = str(schedule_str).lower().strip()
+    
+    intervals = {
+        "15": timedelta(minutes=15),
+        "30": timedelta(minutes=30),
+        "hour": timedelta(hours=1),
+        "3h": timedelta(hours=3),
+        "6h": timedelta(hours=6),
+        "12h": timedelta(hours=12),
+        "weekly": timedelta(days=7),
+    }
+    for key, delta in intervals.items():
+        if key in s:
+            return base_time + delta
+    return base_time + timedelta(days=1)  # default: daily
 
 def scrape_website_job(website_doc: dict):
     """Execution logic for scraping and extracting news from a monitored website."""
