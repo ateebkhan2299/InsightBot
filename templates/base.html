@@ -11,16 +11,71 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- FontAwesome 6 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- FontAwesome 6 — reliable CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
 
     <!-- Core Stylesheets -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
+    <!-- Inline CSS variables as fallback — ensures layout works even if variables.css CDN is slow -->
+    <style>
+      :root {
+        --primary: #3B5BDB; --primary-dark: #2F4AC0;
+        --primary-light: #EEF2FF; --primary-mid: #C7D2FE;
+        --background: #FDF4F7; --surface: #FFF8FB; --surface-raised: #FFF8FB;
+        --border: #F0D6E4; --border-light: #FAE8F1;
+        --text-primary: #111827; --text-secondary: #6B7280;
+        --text-muted: #9CA3AF; --text-inverse: #FFFFFF;
+        --sidebar-bg: #FFF0F6; --sidebar-width: 220px;
+        --sidebar-border: #F0D6E4; --nav-active-bg: rgba(59,91,219,0.08);
+        --nav-active-color: #3B5BDB; --nav-hover-bg: #FDE8F2;
+        --nav-text: #6B7280; --header-height: 56px;
+        --header-bg: #FFF0F6; --header-border: #F0D6E4;
+        --gray-50: #F9FAFB; --gray-100: #F3F4F6; --gray-200: #E5E7EB;
+        --gray-300: #D1D5DB; --gray-400: #9CA3AF; --gray-500: #6B7280;
+        --gray-600: #4B5563; --gray-700: #374151; --gray-800: #1F2937;
+        --gray-900: #111827;
+        --accent-green: #10B981; --accent-green-bg: #ECFDF5;
+        --accent-red: #EF4444; --accent-red-bg: #FEF2F2;
+        --accent-amber: #F59E0B; --accent-amber-bg: #FFFBEB;
+        --accent-blue: #3B82F6; --accent-blue-bg: #EFF6FF;
+        --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+        --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.07),0 1px 2px rgba(0,0,0,0.04);
+        --shadow-md: 0 4px 6px rgba(0,0,0,0.05),0 2px 4px rgba(0,0,0,0.04);
+        --shadow-lg: 0 10px 15px rgba(0,0,0,0.05),0 4px 6px rgba(0,0,0,0.03);
+        --shadow-card: 0 1px 3px rgba(0,0,0,0.08);
+        --shadow-card-hover: 0 4px 12px rgba(59,91,219,0.10),0 1px 4px rgba(0,0,0,0.05);
+        --border-radius-sm: 6px; --border-radius: 8px;
+        --border-radius-md: 10px; --border-radius-lg: 12px; --border-radius-xl: 16px;
+        --transition-fast: all 0.12s ease; --transition: all 0.18s ease;
+        --transition-slow: all 0.28s ease;
+      }
+      [data-theme="dark"], .dark {
+        --primary: #6D8CFF; --primary-dark: #5A7AEE;
+        --primary-light: rgba(109,140,255,0.12); --primary-mid: rgba(109,140,255,0.25);
+        --background: #111318; --surface: #1A1D23; --surface-raised: #1F2229;
+        --border: #2A2D35; --border-light: #22252B;
+        --text-primary: #F3F4F6; --text-secondary: #9CA3AF; --text-muted: #6B7280;
+        --sidebar-bg: #1A1D23; --sidebar-border: #2A2D35;
+        --nav-active-bg: rgba(109,140,255,0.15); --nav-active-color: #6D8CFF;
+        --nav-hover-bg: #22252B; --nav-text: #9CA3AF;
+        --header-bg: #1A1D23; --header-border: #2A2D35;
+        --gray-50: #1A1D23; --gray-100: #1F2229; --gray-200: #2A2D35;
+        --gray-300: #3A3D45; --gray-400: #6B7280; --gray-500: #9CA3AF;
+        --gray-600: #D1D5DB; --gray-700: #E5E7EB; --gray-800: #F3F4F6;
+        --gray-900: #F9FAFB;
+        --accent-green: #34D399; --accent-green-bg: rgba(52,211,153,0.12);
+        --accent-red: #F87171; --accent-red-bg: rgba(248,113,113,0.12);
+        --accent-amber: #FBBF24; --accent-amber-bg: rgba(251,191,36,0.12);
+        --accent-blue: #60A5FA; --accent-blue-bg: rgba(96,165,250,0.12);
+      }
+    </style>
+
     {% block head %}{% endblock %}
 </head>
-<body>
+<body class="app-layout">
 
     <!-- ═══════════════════════════════════════════════════ -->
     <!-- SIDEBAR                                             -->
