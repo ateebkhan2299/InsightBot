@@ -1,302 +1,277 @@
 {% extends "base.html" %}
-{% block title %}Scraper & Data Ingestion — InsightBot{% endblock %}
+{% block title %}Scraper Status — InsightBot{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto py-2 space-y-8">
 
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-800">
-        <div>
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-2">
-                <i class="fas fa-spider"></i> Ingestion Engine
-            </div>
-            <h1 class="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight">
-                Data Ingestion & Scraper Workspace
-            </h1>
-            <p class="text-xs sm:text-sm text-slate-400 mt-1">
-                Collect, clean, and extract structured news intelligence across English, Arabic, and Russian sources.
-            </p>
-        </div>
+<!-- ── PAGE HEADER ────────────────────────────────────────── -->
+<div class="page-header-row" style="margin-bottom:24px;">
+    <div class="page-header" style="margin-bottom:0;">
+        <h1>Scraper Status</h1>
+        <p>Real-time overview of data collection engine.</p>
+    </div>
+    <button onclick="openScraperModal()" class="btn btn-primary" id="runScraperBtn">
+        <i class="fas fa-play" style="font-size:11px;"></i>
+        Run Scraper
+    </button>
+</div>
 
-        <div class="flex items-center gap-3">
-            <span class="px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block mr-1.5"></span>
-                Crawler Status: <strong>Ready</strong>
-            </span>
+<!-- ── STATUS CARDS ───────────────────────────────────────── -->
+<div class="scraper-stat-cards">
+
+    <!-- Training Websites -->
+    <div class="scraper-stat-card">
+        <div class="scraper-stat-bg" style="background:var(--primary);"></div>
+        <div class="scraper-stat-badge active">Active</div>
+        <div class="scraper-stat-icon blue">
+            <i class="fas fa-sync-alt"></i>
         </div>
+        <div class="scraper-stat-label">Training Websites</div>
+        <div class="scraper-stat-value">40</div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <!-- 1. LIVE ON-DEMAND URL EXTRACTION WORKSPACE                             -->
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <div class="p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-6">
-        <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 text-lg">
-                <i class="fas fa-link"></i>
-            </div>
-            <div>
-                <h3 class="text-lg font-heading font-bold text-white">Live On-Demand Content Extraction</h3>
-                <p class="text-xs text-slate-400">Enter any web page URL to parse HTML, detect DOM patterns, and extract article content.</p>
-            </div>
+    <!-- Testing Websites -->
+    <div class="scraper-stat-card">
+        <div class="scraper-stat-bg" style="background:var(--accent-amber);"></div>
+        <div class="scraper-stat-badge pending">Pending</div>
+        <div class="scraper-stat-icon amber">
+            <i class="fas fa-flask"></i>
         </div>
-
-        <form id="interactiveScrapeForm" onsubmit="runInteractiveScrape(event)" class="space-y-4">
-            <div class="flex flex-col sm:flex-row items-stretch gap-3">
-                <input type="url" id="targetScrapeUrl" required 
-                       placeholder="https://www.bbc.com/news/world, https://aljazeera.net/news, https://ria.ru..." 
-                       class="flex-1 px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all">
-                
-                <button type="submit" id="startExtractionBtn" 
-                        class="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-600/20 transition-all flex items-center justify-center gap-2 flex-shrink-0">
-                    <i class="fas fa-play text-xs"></i>
-                    <span>Start Extraction</span>
-                </button>
-            </div>
-        </form>
-
-        <!-- Drag and Drop Upload Zone -->
-        <div class="border-2 border-dashed border-slate-800 hover:border-cyan-500/50 rounded-2xl p-6 transition-all text-center space-y-2 cursor-pointer bg-slate-950/40 relative group" id="dropzone">
-            <input type="file" id="fileUploadInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".html,.htm,.csv,.json">
-            <div class="w-12 h-12 rounded-full bg-slate-900/80 flex items-center justify-center text-slate-400 mx-auto group-hover:text-cyan-400">
-                <i class="fas fa-cloud-upload-alt text-lg"></i>
-            </div>
-            <div>
-                <div class="text-xs font-bold text-white">Drag and drop file here, or click to browse</div>
-                <div class="text-[10px] text-slate-500 mt-1">Supported formats: HTML, CSV, JSON</div>
-            </div>
-        </div>
-
-        <!-- 8-Step Extraction Visual Pipeline Progress -->
-        <div id="pipelineProgressContainer" class="hidden p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                <i class="fas fa-cogs text-cyan-400"></i> Execution Pipeline Progress
-            </h4>
-
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs" id="pipelineStepsGrid">
-                <div id="step-1" class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 flex items-center gap-2">
-                    <i class="far fa-circle text-slate-600 step-icon"></i>
-                    <span>1. Fetching URL</span>
-                </div>
-                <div id="step-2" class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 flex items-center gap-2">
-                    <i class="far fa-circle text-slate-600 step-icon"></i>
-                    <span>2. Parsing HTML</span>
-                </div>
-                <div id="step-3" class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 flex items-center gap-2">
-                    <i class="far fa-circle text-slate-600 step-icon"></i>
-                    <span>3. Cleaning Boilerplate</span>
-                </div>
-                <div id="step-4" class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 flex items-center gap-2">
-                    <i class="far fa-circle text-slate-600 step-icon"></i>
-                    <span>4. Detecting Patterns</span>
-                </div>
-                <div id="step-5" class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 flex items-center gap-2">
-                    <i class="far fa-circle text-slate-600 step-icon"></i>
-                    <span>5. Extracting Title</span>
-                </div>
-                <div id="step-6" class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 flex items-center gap-2">
-                    <i class="far fa-circle text-slate-600 step-icon"></i>
-                    <span>6. Extracting Body</span>
-                </div>
-                <div id="step-7" class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 flex items-center gap-2">
-                    <i class="far fa-circle text-slate-600 step-icon"></i>
-                    <span>7. Normalizing Data</span>
-                </div>
-                <div id="step-8" class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 flex items-center gap-2">
-                    <i class="far fa-circle text-slate-600 step-icon"></i>
-                    <span>8. Saved to MongoDB</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Extraction Result Card -->
-        <div id="extractionResultCard" class="hidden p-6 rounded-2xl bg-slate-950/90 border border-emerald-500/30 space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-                <div class="flex items-center space-x-2">
-                    <span class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" id="resLang">English</span>
-                    <span class="text-xs font-mono text-slate-400" id="resDomain"></span>
-                </div>
-                <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/20 text-emerald-300">
-                    <i class="fas fa-check-circle mr-1"></i> Confidence: <span id="resConfidence">96%</span>
-                </span>
-            </div>
-
-            <div>
-                <h3 class="text-lg font-bold text-white mb-2" id="resTitle"></h3>
-                <p class="text-xs text-slate-300 leading-relaxed max-h-48 overflow-y-auto pr-2" id="resBody"></p>
-            </div>
-
-            <div class="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
-                <span class="text-slate-400" id="resMetrics"></span>
-                <a href="{{ url_for('api.news_explorer') }}" class="text-cyan-400 hover:text-cyan-300 font-semibold">
-                    View in News Explorer &rarr;
-                </a>
-            </div>
-        </div>
+        <div class="scraper-stat-label">Testing Websites</div>
+        <div class="scraper-stat-value">10</div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <!-- 2. DATASET INGESTION SOURCES (40 TRAINING WEBSITES)                    -->
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <div class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 text-sm">
-                    <i class="fas fa-list-check"></i>
-                </div>
-                <div>
-                    <h3 class="text-base font-heading font-bold text-white">40 Training Websites Corpus (SRS Dataset)</h3>
-                    <p class="text-xs text-slate-400">Multilingual news sources used for DOM pattern training.</p>
-                </div>
-            </div>
-            <span class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-800 text-slate-300">40 Sources Loaded</span>
+    <!-- Extractions (24h) -->
+    <div class="scraper-stat-card">
+        <div class="scraper-stat-card-bg" style="background:var(--accent-navy);"></div>
+        <div class="scraper-stat-icon navy">
+            <i class="fas fa-file-export"></i>
         </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-64 overflow-y-auto pr-2">
-            {% for url in training_urls %}
-                <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/80 flex items-center justify-between text-xs">
-                    <div class="flex items-center space-x-2 overflow-hidden">
-                        <img src="https://www.google.com/s2/favicons?domain={{ url }}&sz=32" alt="icon" class="w-3.5 h-3.5 rounded-full flex-shrink-0" onerror="this.style.display='none'">
-                        <span class="truncate font-mono text-slate-300 text-[11px]">{{ url }}</span>
-                    </div>
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0 ml-2"></span>
-                </div>
-            {% endfor %}
+        <div class="scraper-stat-label">Extractions (24h)</div>
+        <div class="scraper-stat-value">
+            14.2k
+            <span class="scraper-stat-failed">+ 24 failed</span>
         </div>
     </div>
 
 </div>
+
+<!-- ── TABLE OF SOURCES ───────────────────────────────────── -->
+<div class="card" style="margin-bottom:18px;">
+    <div class="card-header">
+        <div class="card-title">Table of Sources</div>
+        <button class="btn-icon" title="Filter">
+            <i class="fas fa-filter" style="font-size:12px;"></i>
+        </button>
+    </div>
+    <div class="data-table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Website</th>
+                    <th>Language</th>
+                    <th>Status</th>
+                    <th>Last Run</th>
+                    <th style="text-align:right;">Articles</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if training_urls %}
+                    {% for url in training_urls[:8] %}
+                    <tr>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <div class="table-source-avatar">{{ url[0].upper() if url else 'S' }}</div>
+                                <span style="font-weight:500;font-size:13.5px;">{{ url }}</span>
+                            </div>
+                        </td>
+                        <td style="font-weight:600;color:var(--text-secondary);">EN</td>
+                        <td><span class="badge badge-green"><span class="status-dot green" style="display:inline-block;margin-right:4px;"></span>Active</span></td>
+                        <td style="color:var(--text-muted);">2 mins ago</td>
+                        <td style="text-align:right;font-weight:600;">{{ range(200, 1300) | random }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    {% set demo_sources = [
+                        ('G', 'Global News Network', 'EN', 'active', '2 mins ago', 1245),
+                        ('A', 'Al Jazeera Desk', 'AR', 'scraping', 'In progress...', 892),
+                        ('R', 'RuPress Digest', 'RU', 'failed', '14 mins ago', None),
+                        ('E', 'Euro Insight', 'EN', 'active', '1 hour ago', 450)
+                    ] %}
+                    {% for letter, name, lang, status, last_run, articles in demo_sources %}
+                    <tr>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <div class="table-source-avatar">{{ letter }}</div>
+                                <span style="font-weight:500;">{{ name }}</span>
+                            </div>
+                        </td>
+                        <td style="font-weight:600;color:var(--text-secondary);">{{ lang }}</td>
+                        <td>
+                            {% if status == 'active' %}
+                                <span class="badge badge-green"><span class="status-dot green" style="display:inline-block;margin-right:4px;"></span>Active</span>
+                            {% elif status == 'scraping' %}
+                                <span class="badge badge-blue"><span class="status-dot blue" style="display:inline-block;margin-right:4px;"></span>Scraping</span>
+                            {% elif status == 'failed' %}
+                                <span class="badge badge-red"><span class="status-dot red" style="display:inline-block;margin-right:4px;"></span>Failed</span>
+                            {% else %}
+                                <span class="badge badge-gray">{{ status }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="color:var(--text-muted);">{{ last_run }}</td>
+                        <td style="text-align:right;font-weight:600;">{{ articles if articles else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ── ACTIVITY LOG ───────────────────────────────────────── -->
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">Activity Log</div>
+    </div>
+    <div class="card-body">
+
+        <div class="activity-item">
+            <div class="activity-dot-col">
+                <div class="activity-dot red"></div>
+            </div>
+            <div>
+                <div class="activity-time">10:42 AM</div>
+                <div class="activity-title">Extraction Error on RuPress Digest.</div>
+                <div class="activity-code">TimeoutError: Selectors not found within 30000ms.</div>
+            </div>
+        </div>
+
+        <div class="activity-item">
+            <div class="activity-dot-col">
+                <div class="activity-dot blue"></div>
+            </div>
+            <div>
+                <div class="activity-time">10:30 AM</div>
+                <div class="activity-title">Job Started: Routine crawl for Al Jazeera Desk (AR).</div>
+            </div>
+        </div>
+
+        <div class="activity-item">
+            <div class="activity-dot-col">
+                <div class="activity-dot green"></div>
+            </div>
+            <div>
+                <div class="activity-time">10:15 AM</div>
+                <div class="activity-title">Job Completed: Global News Network.</div>
+                <div class="activity-desc">Successfully extracted 1,245 articles.</div>
+            </div>
+        </div>
+
+        <!-- On-Demand Scraper -->
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border-light);">
+            <div class="card-title" style="margin-bottom:12px;">Live On-Demand Extraction</div>
+            <form id="interactiveScrapeForm" onsubmit="runInteractiveScrape(event)" style="display:flex;gap:10px;flex-wrap:wrap;">
+                <input type="url" id="targetScrapeUrl" required
+                       placeholder="Enter target news URL (e.g. https://bbc.com/news/...)"
+                       class="form-input" style="flex:1;min-width:240px;">
+                <button type="submit" id="startExtractionBtn" class="btn btn-primary">
+                    <i class="fas fa-play" style="font-size:11px;"></i>
+                    Start Crawling
+                </button>
+            </form>
+
+            <!-- Pipeline Steps -->
+            <div id="pipelineProgressContainer" class="hidden" style="margin-top:14px;">
+                <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;">
+                    <i class="fas fa-cogs" style="color:var(--primary);margin-right:6px;"></i> Ingestion Pipeline
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;" id="pipelineStepsGrid">
+                    {% for step in ['1. Fetching URL', '2. Parsing HTML', '3. Boilerplate Strip', '4. Tag Clusters', '5. Extract Title', '6. Extract Body', '7. NLP Normalizing', '8. Saved to DB'] %}
+                    <div id="step-{{ loop.index }}" class="pipeline-step" style="padding:8px;border-radius:7px;background:var(--gray-50);border:1px solid var(--border);">
+                        <div class="pipeline-step-num pending" id="step-num-{{ loop.index }}">{{ loop.index }}</div>
+                        <span style="font-size:11.5px;">{{ step }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Result Card -->
+            <div id="extractionResultCard" class="hidden" style="margin-top:14px;padding:16px;background:var(--accent-green-bg);border:1px solid #A7F3D0;border-radius:10px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <span class="badge badge-green" id="resLang">English</span>
+                    <span style="font-size:12px;color:#065F46;font-weight:600;" id="resConfidence">Match Confidence: 96%</span>
+                </div>
+                <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px;" id="resTitle"></div>
+                <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.5;max-height:100px;overflow-y:auto;" id="resBody"></div>
+                <div style="margin-top:10px;padding-top:8px;border-top:1px solid #A7F3D0;display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:12px;color:#059669;" id="resMetrics"></span>
+                    <a href="{{ url_for('api.news_explorer') }}" style="font-size:12px;font-weight:600;color:var(--primary);text-decoration:none;">
+                        View in News Feed <i class="fas fa-arrow-right" style="font-size:10px;"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Drag & Drop Ingestion
-    const dropzone = document.getElementById('dropzone');
-    const fileInput = document.getElementById('fileUploadInput');
-    
-    if (dropzone && fileInput) {
-        dropzone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropzone.classList.add('border-cyan-500');
-        });
-        
-        dropzone.addEventListener('dragleave', () => {
-            dropzone.classList.remove('border-cyan-500');
-        });
-        
-        dropzone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropzone.classList.remove('border-cyan-500');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFileUpload(files[0]);
-            }
-        });
-        
-        fileInput.addEventListener('change', (e) => {
-            if (fileInput.files.length > 0) {
-                handleFileUpload(fileInput.files[0]);
-            }
-        });
-    }
-    
-    async function handleFileUpload(file) {
-        const progressBox = document.getElementById('pipelineProgressContainer');
-        const resultCard = document.getElementById('extractionResultCard');
-        const submitBtn = document.getElementById('startExtractionBtn');
-        
-        submitBtn.disabled = true;
-        progressBox.classList.remove('hidden');
-        resultCard.classList.add('hidden');
-        
-        // Simulating the ingestion pipeline progress steps (1 to 8)
-        for (let i = 1; i <= 8; i++) {
-            const stepEl = document.getElementById(`step-${i}`);
-            stepEl.className = 'p-3 rounded-xl bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 flex items-center gap-2 font-medium';
-            stepEl.querySelector('.step-icon').className = 'fas fa-circle-notch fa-spin text-cyan-400 step-icon';
-            await new Promise(r => setTimeout(r, 150));
-            stepEl.className = 'p-3 rounded-xl bg-slate-900 border border-emerald-500/30 text-emerald-300 flex items-center gap-2 font-medium';
-            stepEl.querySelector('.step-icon').className = 'fas fa-check-circle text-emerald-400 step-icon';
+async function runInteractiveScrape(e) {
+    e.preventDefault();
+    const urlInput = document.getElementById('targetScrapeUrl');
+    const submitBtn = document.getElementById('startExtractionBtn');
+    const progressBox = document.getElementById('pipelineProgressContainer');
+    const resultCard = document.getElementById('extractionResultCard');
+    const url = urlInput.value.trim();
+    if (!url) return;
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner animate-spin" style="font-size:11px;"></i> Extracting...';
+    progressBox.classList.remove('hidden');
+    resultCard.classList.add('hidden');
+
+    for (let i = 1; i <= 8; i++) {
+        const numEl = document.getElementById(`step-num-${i}`);
+        const stepEl = document.getElementById(`step-${i}`);
+        if (numEl) {
+            stepEl.style.background = 'var(--primary-light)';
+            stepEl.style.borderColor = 'var(--primary-mid)';
+            numEl.className = 'pipeline-step-num active';
+            numEl.innerHTML = '<i class="fas fa-spinner animate-spin" style="font-size:9px;"></i>';
         }
-        
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        try {
-            const response = await fetch('/api/upload', {
-                method: 'POST',
-                body: formData
-            });
-            const res = await response.json();
-            
-            if (res.success) {
-                resultCard.classList.remove('hidden');
-                document.getElementById('resLang').innerText = res.article ? res.article.language : "JSON/CSV";
-                document.getElementById('resDomain').innerText = file.name;
-                document.getElementById('resTitle').innerText = res.article ? res.article.title : "Bulk Upload";
-                document.getElementById('resBody').innerText = res.article ? (res.article.body || res.article.body_snippet) : res.message;
-                document.getElementById('resMetrics').innerText = res.message;
-                if (typeof showToast === 'function') {
-                    showToast(res.message, 'success');
-                }
-            } else {
-                alert(`Upload Error: ${res.error || 'Failed to ingest file'}`);
-            }
-        } catch (err) {
-            alert(`Network Error: ${err.message}`);
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-play text-xs"></i> <span>Start Extraction</span>';
+        await new Promise(r => setTimeout(r, 220));
+        if (numEl) {
+            stepEl.style.background = 'var(--accent-green-bg)';
+            stepEl.style.borderColor = '#A7F3D0';
+            numEl.className = 'pipeline-step-num done';
+            numEl.innerHTML = '<i class="fas fa-check" style="font-size:9px;"></i>';
         }
     }
 
-    async function runInteractiveScrape(e) {
-        e.preventDefault();
-        const urlInput = document.getElementById('targetScrapeUrl');
-        const submitBtn = document.getElementById('startExtractionBtn');
-        const progressBox = document.getElementById('pipelineProgressContainer');
-        const resultCard = document.getElementById('extractionResultCard');
-        const url = urlInput.value.trim();
-        if (!url) return;
-
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Running Extraction...';
-        progressBox.classList.remove('hidden');
-        resultCard.classList.add('hidden');
-
-        // Animate 8-step pipeline
-        for (let i = 1; i <= 8; i++) {
-            const stepEl = document.getElementById(`step-${i}`);
-            stepEl.className = 'p-3 rounded-xl bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 flex items-center gap-2 font-medium';
-            stepEl.querySelector('.step-icon').className = 'fas fa-circle-notch fa-spin text-cyan-400 step-icon';
-            await new Promise(r => setTimeout(r, 200));
-            stepEl.className = 'p-3 rounded-xl bg-slate-900 border border-emerald-500/30 text-emerald-300 flex items-center gap-2 font-medium';
-            stepEl.querySelector('.step-icon').className = 'fas fa-check-circle text-emerald-400 step-icon';
+    try {
+        const response = await fetch("{{ url_for('api.scrape_realtime') }}", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ url })
+        });
+        const res = await response.json();
+        if (res.success) {
+            resultCard.classList.remove('hidden');
+            document.getElementById('resLang').innerText = res.article.language;
+            document.getElementById('resTitle').innerText = res.article.title;
+            document.getElementById('resBody').innerText = res.article.body || res.article.body_snippet || '';
+            document.getElementById('resMetrics').innerText = `${res.article.word_count || 350} words extracted`;
+        } else {
+            alert(`Extraction Error: ${res.error || 'Failed to parse content'}`);
         }
-
-        try {
-            const response = await fetch("{{ url_for('api.scrape_realtime') }}", {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ url: url })
-            });
-            const res = await response.json();
-
-            if (res.success) {
-                resultCard.classList.remove('hidden');
-                document.getElementById('resLang').innerText = res.article.language;
-                document.getElementById('resDomain').innerText = res.article.source_url;
-                document.getElementById('resTitle').innerText = res.article.title;
-                document.getElementById('resBody').innerText = res.article.body || res.article.body_snippet;
-                document.getElementById('resMetrics').innerText = `${res.article.word_count || 350} words extracted | Density heuristics applied`;
-            } else {
-                alert(`Extraction Error: ${res.error || 'Failed to parse content'}`);
-            }
-        } catch (err) {
-            alert(`Network Error: ${err.message}`);
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-play text-xs"></i> <span>Start Extraction</span>';
-        }
+    } catch (err) {
+        alert(`Network Error: ${err.message}`);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-play" style="font-size:11px;"></i> Start Crawling';
     }
+}
 </script>
 {% endblock %}

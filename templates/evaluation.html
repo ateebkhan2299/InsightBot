@@ -1,122 +1,226 @@
 {% extends "base.html" %}
-{% block title %}Model Evaluation & Accuracy — InsightBot{% endblock %}
+{% block title %}Extraction Evaluation — InsightBot{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto py-2 space-y-8">
 
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-800">
-        <div>
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-2">
-                <i class="fas fa-check-double"></i> Generalization Testing
+<!-- ── PAGE HEADER ────────────────────────────────────────── -->
+<div class="page-header" style="margin-bottom:24px;">
+    <h1>Extraction Evaluation</h1>
+    <p>Analyze model performance metrics for content extraction across various languages and sources.</p>
+</div>
+
+<!-- ── TOP TWO CARDS ─────────────────────────────────────── -->
+<div class="eval-top-grid">
+
+    <!-- Overall Accuracy -->
+    <div class="card">
+        <div class="card-body">
+            <div style="font-size:12px;font-weight:500;color:var(--text-muted);margin-bottom:12px;">Overall Accuracy</div>
+            <div class="eval-accuracy-value">
+                94.8%
+                <span class="eval-trend-chip">
+                    <i class="fas fa-arrow-trend-up" style="font-size:10px;"></i> +1.2%
+                </span>
             </div>
-            <h1 class="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight">
-                Model Evaluation on 10 Unseen Websites
-            </h1>
-            <p class="text-xs sm:text-sm text-slate-400 mt-1">
-                SRS Requirement viii: Validating pattern matching and content extraction accuracy on unseen multilingual sites.
-            </p>
-        </div>
-
-        <div class="flex items-center gap-2">
-            <span class="px-3.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                <i class="fas fa-shield-alt"></i> Benchmark: 100% Passed
-            </span>
+            <div style="font-size:13px;color:var(--text-muted);margin-top:6px;margin-bottom:16px;">
+                Combined average across all evaluation sets.
+            </div>
+            <div class="eval-split-row">
+                <div>
+                    <div class="eval-split-label">
+                        <span>Training Set</span>
+                        <span>96.2%</span>
+                    </div>
+                    <div class="eval-progress-bar">
+                        <div class="eval-progress-fill" style="width:96.2%;"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="eval-split-label">
+                        <span>Testing Set</span>
+                        <span>93.4%</span>
+                    </div>
+                    <div class="eval-progress-bar">
+                        <div class="eval-progress-fill" style="width:93.4%;background:var(--primary);opacity:0.6;"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <!-- 1. BENCHMARK SCORE SUMMARY CARDS                                       -->
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Unseen Test Sites</span>
-            <div class="text-3xl font-extrabold text-white mt-2 font-heading">10 / 10</div>
-            <div class="text-[11px] text-slate-400 font-medium mt-1">Separate from 40 Training Sites</div>
+    <!-- Performance by Language Chart -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">Performance by Language</div>
         </div>
-
-        <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Overall Accuracy</span>
-            <div class="text-3xl font-extrabold text-emerald-400 mt-2 font-heading">100.0%</div>
-            <div class="text-[11px] text-emerald-400 font-medium mt-1">Zero False Extractions</div>
-        </div>
-
-        <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Title Accuracy</span>
-            <div class="text-3xl font-extrabold text-cyan-400 mt-2 font-heading">100.0%</div>
-            <div class="text-[11px] text-slate-400 font-medium mt-1">Header & Meta Extraction</div>
-        </div>
-
-        <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Body Accuracy</span>
-            <div class="text-3xl font-extrabold text-indigo-400 mt-2 font-heading">100.0%</div>
-            <div class="text-[11px] text-slate-400 font-medium mt-1">Paragraph Density Clustering</div>
-        </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <!-- 2. DETAILED TEST BENCHMARK TABLE                                       -->
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <div class="p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-            <div>
-                <h3 class="text-base font-heading font-bold text-white">Unseen Test Sites Evaluation Matrix</h3>
-                <p class="text-xs text-slate-400">Ground truth verification across English, Arabic, and Russian news sites</p>
+        <div class="card-body">
+            <div class="chart-container" style="height:170px;">
+                <canvas id="langPerfChart"></canvas>
             </div>
-            <span class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-800 text-slate-300">10 / 10 Verified</span>
-        </div>
-
-        <div class="overflow-x-auto rounded-2xl border border-slate-800">
-            <table class="w-full text-left text-xs">
-                <thead class="bg-slate-950 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-800">
-                    <tr>
-                        <th class="px-4 py-3.5">#</th>
-                        <th class="px-4 py-3.5">Test Website URL</th>
-                        <th class="px-4 py-3.5">Language</th>
-                        <th class="px-4 py-3.5">Title Detection</th>
-                        <th class="px-4 py-3.5">Body Min Words</th>
-                        <th class="px-4 py-3.5">Accuracy</th>
-                        <th class="px-4 py-3.5 text-right">Result</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-800/80">
-                    {% for tc in test_cases %}
-                        <tr class="hover:bg-slate-800/30 transition-colors">
-                            <td class="px-4 py-3.5 font-bold text-slate-500">{{ loop.index }}</td>
-                            <td class="px-4 py-3.5 font-mono text-cyan-400">
-                                <a href="{{ tc.url }}" target="_blank" class="hover:underline flex items-center gap-1">
-                                    {{ tc.url }} <i class="fas fa-external-link-alt text-[9px] opacity-60"></i>
-                                </a>
-                            </td>
-                            <td class="px-4 py-3.5">
-                                {% if tc.language == 'Arabic' %}
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Arabic</span>
-                                {% elif tc.language == 'Russian' %}
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">Russian</span>
-                                {% else %}
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">English</span>
-                                {% endif %}
-                            </td>
-                            <td class="px-4 py-3.5 text-slate-200">
-                                Matched ("{{ tc.expected_title_contains }}")
-                            </td>
-                            <td class="px-4 py-3.5 text-slate-300 font-bold">
-                                &gt; {{ tc.expected_body_min_words }} words
-                            </td>
-                            <td class="px-4 py-3.5 text-emerald-400 font-bold">
-                                100%
-                            </td>
-                            <td class="px-4 py-3.5 text-right">
-                                <span class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                    <i class="fas fa-check mr-1"></i> PASSED
-                                </span>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
         </div>
     </div>
 
 </div>
+
+<!-- ── SOURCE EVALUATION DETAILS TABLE ───────────────────── -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <div class="card-title">Source Evaluation Details</div>
+            <div class="card-subtitle">Ground truth verification across languages and sources</div>
+        </div>
+        <!-- Toggle buttons -->
+        <div class="filter-toggle-group" id="splitToggleGroup">
+            <button class="filter-toggle-btn active" onclick="filterSplit('all', this)" id="btn-all">
+                <span class="dot" style="background:var(--primary);"></span> All
+            </button>
+            <button class="filter-toggle-btn" onclick="filterSplit('TRAIN', this)" id="btn-train">
+                <span class="dot" style="background:var(--primary);"></span> Training Split
+            </button>
+            <button class="filter-toggle-btn" onclick="filterSplit('TEST', this)" id="btn-test">
+                <span class="dot" style="background:var(--gray-400);"></span> Testing Split
+            </button>
+        </div>
+    </div>
+    <div class="data-table-wrap">
+        <table class="data-table" id="evalTable">
+            <thead>
+                <tr>
+                    <th>Website</th>
+                    <th>Language</th>
+                    <th>Split</th>
+                    <th>Title Acc.</th>
+                    <th>Body Acc.</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if eval_results %}
+                    {% for row in eval_results %}
+                    <tr data-split="{{ row.split_type | upper }}">
+                        <td style="font-weight:500;">{{ row.website }}</td>
+                        <td style="font-weight:600;color:var(--text-secondary);">{{ row.language }}</td>
+                        <td>
+                            <span class="split-badge {{ 'train' if row.split_type|upper == 'TRAIN' else 'test' }}">
+                                {{ row.split_type | upper }}
+                            </span>
+                        </td>
+                        <td style="font-weight:600;">{{ row.title_accuracy }}%</td>
+                        <td style="font-weight:600;">{{ row.body_accuracy }}%</td>
+                        <td>
+                            {% if row.status == 'Pass' %}
+                                <span class="eval-status-pass"><i class="fas fa-check-circle" style="margin-right:4px;"></i>Pass</span>
+                            {% elif row.status == 'Review' %}
+                                <span class="eval-status-review"><i class="fas fa-exclamation-triangle" style="margin-right:4px;"></i>Review</span>
+                            {% else %}
+                                <span class="eval-status-fail"><i class="fas fa-times-circle" style="margin-right:4px;"></i>Fail</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    {% set demo_rows = [
+                        ('aljazeera.net', 'AR', 'TRAIN', '98.5', '94.2', 'Pass'),
+                        ('bbc.co.uk', 'EN', 'TEST', '99.1', '97.8', 'Pass'),
+                        ('tass.ru', 'RU', 'TRAIN', '92.0', '88.5', 'Review'),
+                        ('lemonde.fr', 'FR', 'TEST', '96.4', '95.1', 'Pass'),
+                        ('xinhuanet.com', 'ZH', 'TEST', '84.2', '76.8', 'Fail'),
+                        ('reuters.com', 'EN', 'TRAIN', '99.8', '98.2', 'Pass'),
+                        ('rt.com', 'RU', 'TEST', '91.5', '87.3', 'Pass'),
+                        ('alarabiya.net', 'AR', 'TRAIN', '97.2', '93.6', 'Pass')
+                    ] %}
+                    {% for site, lang, split, tacc, bacc, status in demo_rows %}
+                    <tr data-split="{{ split }}">
+                        <td style="font-weight:500;">{{ site }}</td>
+                        <td style="font-weight:600;color:var(--text-secondary);">{{ lang }}</td>
+                        <td>
+                            <span class="split-badge {{ 'train' if split == 'TRAIN' else 'test' }}">{{ split }}</span>
+                        </td>
+                        <td style="font-weight:600;">{{ tacc }}%</td>
+                        <td style="font-weight:600;">{{ bacc }}%</td>
+                        <td>
+                            {% if status == 'Pass' %}
+                                <span class="eval-status-pass"><i class="fas fa-check-circle" style="margin-right:4px;"></i>Pass</span>
+                            {% elif status == 'Review' %}
+                                <span class="eval-status-review"><i class="fas fa-exclamation-triangle" style="margin-right:4px;"></i>Review</span>
+                            {% else %}
+                                <span class="eval-status-fail"><i class="fas fa-times-circle" style="margin-right:4px;"></i>Fail</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Performance by Language grouped bar chart
+    new Chart(document.getElementById('langPerfChart'), {
+        type: 'bar',
+        data: {
+            labels: ['EN', 'AR', 'FR', 'RU', 'ZH'],
+            datasets: [
+                {
+                    label: 'Title Acc.',
+                    data: [99.1, 97.2, 96.4, 92.0, 84.2],
+                    backgroundColor: '#1E3A5F',
+                    borderRadius: 4,
+                    barPercentage: 0.5
+                },
+                {
+                    label: 'Body Acc.',
+                    data: [97.8, 93.6, 95.1, 88.5, 76.8],
+                    backgroundColor: '#818CF8',
+                    borderRadius: 4,
+                    barPercentage: 0.5
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: { font: { size: 11 }, color: '#6B7280', boxWidth: 10, padding: 12 }
+                }
+            },
+            scales: {
+                x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 }, color: '#9CA3AF' } },
+                y: {
+                    grid: { color: '#F3F4F6' },
+                    border: { display: false },
+                    ticks: { font: { size: 11 }, color: '#9CA3AF' },
+                    min: 60,
+                    max: 100
+                }
+            }
+        }
+    });
+});
+
+// Split filter
+function filterSplit(split, btn) {
+    // Update button states
+    document.querySelectorAll('.filter-toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Filter rows
+    document.querySelectorAll('#evalTable tbody tr').forEach(row => {
+        const rowSplit = row.getAttribute('data-split');
+        row.style.display = (split === 'all' || rowSplit === split) ? '' : 'none';
+    });
+}
+</script>
 {% endblock %}

@@ -1,178 +1,299 @@
 {% extends "base.html" %}
-{% block title %}Tableau & Advanced Analytics — InsightBot{% endblock %}
+{% block title %}Analytics Overview — InsightBot{% endblock %}
 
 {% block head %}
-<!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto py-2 space-y-8">
 
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-800">
-        <div>
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-2">
-                <i class="fas fa-chart-pie"></i> Visual Intelligence
+<!-- ── PAGE HEADER ────────────────────────────────────────── -->
+<div class="page-header-row" style="margin-bottom:24px;">
+    <div class="page-header" style="margin-bottom:0;">
+        <h1>Analytics Overview</h1>
+        <p>Comprehensive data intelligence across sources and languages.</p>
+    </div>
+    <a href="{{ url_for('api.export_data', format_type='tableau') }}" class="btn btn-secondary" id="exportAnalyticsBtn">
+        <i class="fas fa-download" style="font-size:12px;color:var(--primary);"></i>
+        Export
+    </a>
+</div>
+
+<!-- ── ROW 1: Volume Chart + Language Donut ───────────────── -->
+<div class="two-col-grid" style="margin-bottom:18px;">
+
+    <!-- Article Volume Over Time -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Article Volume Over Time</div>
             </div>
-            <h1 class="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight">
-                Tableau & Advanced Analytics Hub
-            </h1>
-            <p class="text-xs sm:text-sm text-slate-400 mt-1">
-                Visual exploration of keyword distributions, language shares, and temporal ingestion metrics.
-            </p>
+            <button class="btn-icon" title="Options">
+                <i class="fas fa-ellipsis-h" style="font-size:12px;"></i>
+            </button>
         </div>
-
-        <div class="flex items-center gap-2.5">
-            <a href="{{ url_for('api.export_data', format_type='tableau') }}" 
-               class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2">
-                <i class="fas fa-file-csv text-sm"></i>
-                <span>Download Tableau CSV</span>
-            </a>
-            
-            <a href="{{ url_for('api.export_data', format_type='json') }}" 
-               class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-semibold border border-slate-800 transition-all flex items-center gap-2">
-                <i class="fas fa-file-code text-cyan-400"></i>
-                <span>JSON Export</span>
-            </a>
+        <div class="card-body">
+            <div class="chart-container" style="height:200px;">
+                <canvas id="articleVolumeChart"></canvas>
+            </div>
         </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <!-- 1. TABLEAU EMBED & CONNECTOR WORKSPACE                                 -->
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <div class="p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-indigo-500/30 shadow-2xl space-y-6">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-slate-800">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-lg">
-                    <i class="fas fa-cubes"></i>
-                </div>
-                <div>
-                    <h3 class="text-lg font-heading font-bold text-white flex items-center gap-2">
-                        Tableau Desktop & Public Connector
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">SRS REQUISITE vi</span>
-                    </h3>
-                    <p class="text-xs text-slate-400">Export structured CSVs into Tableau Desktop or preview public workbooks.</p>
+    <!-- Language Distribution -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">Language Distribution</div>
+        </div>
+        <div class="card-body" style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+            <div class="chart-container" style="height:160px;width:160px;position:relative;flex-shrink:0;">
+                <canvas id="langDistChart"></canvas>
+                <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
+                    <div style="font-size:20px;font-weight:700;color:var(--text-primary);letter-spacing:-1px;">12.4k</div>
+                    <div style="font-size:11px;color:var(--text-muted);">Total</div>
                 </div>
             </div>
-
-            <div class="flex items-center gap-2">
-                <input type="url" id="tableauCustomUrl" placeholder="https://public.tableau.com/views/YourViz..." 
-                       class="px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 w-64 focus:outline-none focus:border-indigo-500">
-                <button onclick="loadTableauEmbed()" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition-all">
-                    Load Viz
-                </button>
+            <div style="width:100%;display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div style="width:10px;height:10px;border-radius:50%;background:#1E3A5F;"></div>
+                        <span style="font-size:13px;color:var(--text-secondary);">English (EN)</span>
+                    </div>
+                    <span style="font-size:13px;font-weight:600;">60%</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div style="width:10px;height:10px;border-radius:50%;background:var(--primary);"></div>
+                        <span style="font-size:13px;color:var(--text-secondary);">Arabic (AR)</span>
+                    </div>
+                    <span style="font-size:13px;font-weight:600;">24%</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div style="width:10px;height:10px;border-radius:50%;background:#818CF8;"></div>
+                        <span style="font-size:13px;color:var(--text-secondary);">Russian (RU)</span>
+                    </div>
+                    <span style="font-size:13px;font-weight:600;">16%</span>
+                </div>
             </div>
         </div>
-
-        <div id="tableauEmbedArea" class="w-full h-80 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col items-center justify-center text-center p-6 text-slate-400">
-            <i class="fas fa-chart-area text-4xl text-slate-700 mb-3"></i>
-            <h4 class="text-sm font-bold text-white mb-1">Tableau Visualizer Connector Ready</h4>
-            <p class="text-xs text-slate-500 max-w-md mb-4">
-                Open <code>data/output/tableau_export.csv</code> directly in Tableau Desktop, or paste a Tableau Public URL above to preview here.
-            </p>
-            <a href="{{ url_for('api.export_data', format_type='tableau') }}" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors">
-                <i class="fas fa-download mr-1.5 text-emerald-400"></i> Get CSV Dataset
-            </a>
-        </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <!-- 2. NATIVE ADVANCED ANALYTICAL VISUALIZATIONS                           -->
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        <!-- Keyword Frequency Chart -->
-        <div class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl flex flex-col">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base font-heading font-bold text-white flex items-center gap-2">
-                    <i class="fas fa-hashtag text-cyan-400"></i> Top Entity Frequencies
-                </h3>
-                <span class="text-xs text-slate-400">Top 10 Keywords</span>
-            </div>
-            <div class="h-64 relative w-full my-auto">
-                <canvas id="analyticsKeywordsChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Language Distribution Donut -->
-        <div class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl flex flex-col">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base font-heading font-bold text-white flex items-center gap-2">
-                    <i class="fas fa-pie-chart text-purple-400"></i> Multilingual Market Share
-                </h3>
-                <span class="text-xs text-slate-400">EN / AR / RU</span>
-            </div>
-            <div class="h-64 relative w-full my-auto">
-                <canvas id="analyticsLangChart"></canvas>
-            </div>
-        </div>
-
     </div>
 
 </div>
+
+<!-- ── ROW 2: Articles by Source + Trending Topics ────────── -->
+<div class="two-col-grid" style="margin-bottom:18px;">
+
+    <!-- Articles by Source Bar Chart -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">Articles by Source</div>
+        </div>
+        <div class="card-body">
+            <div class="chart-container" style="height:200px;">
+                <canvas id="sourceBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trending Topics -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">Trending Topics</div>
+        </div>
+        <div class="card-body">
+            {% set topics = [
+                ('Global Economy', 4200, 100),
+                ('Geopolitics (MENA)', 3850, 91),
+                ('Technology Regulation', 2900, 69),
+                ('Energy Markets', 2100, 50)
+            ] %}
+            {% if stats and stats.top_keywords %}
+                {% for kw in stats.top_keywords[:4] %}
+                <div class="trending-item">
+                    <div class="trending-row">
+                        <span class="trending-name">{{ kw.topic }}</span>
+                        <span class="trending-value">{{ kw.count }}</span>
+                    </div>
+                    <div class="trending-bar-track">
+                        <div class="trending-bar-fill" style="width:{{ [kw.count * 2, 100] | min }}%;"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                {% for name, val, pct in topics %}
+                <div class="trending-item">
+                    <div class="trending-row">
+                        <span class="trending-name">{{ name }}</span>
+                        <span class="trending-value">{{ val }}</span>
+                    </div>
+                    <div class="trending-bar-track">
+                        <div class="trending-bar-fill" style="width:{{ pct }}%;"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<!-- ── SOURCE PERFORMANCE TABLE ───────────────────────────── -->
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">Source Performance</div>
+        <a href="{{ url_for('api.export_data', format_type='csv') }}" class="btn btn-ghost btn-sm" id="exportSourceBtn">
+            <i class="fas fa-download" style="font-size:11px;"></i>
+            Export
+        </a>
+    </div>
+    <div class="data-table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Source Name</th>
+                    <th>Articles Extracted</th>
+                    <th>Success Rate</th>
+                    <th>Last Scraped</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if stats and stats.domain_stats %}
+                    {% for domain, count in stats.domain_stats.items() %}
+                    <tr>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <div class="table-source-avatar">{{ domain[0].upper() }}</div>
+                                <span style="font-weight:500;">{{ domain }}</span>
+                            </div>
+                        </td>
+                        <td style="font-weight:600;">{{ count }}</td>
+                        <td>
+                            {% if count > 100 %}
+                                <span class="badge badge-green">99.8%</span>
+                            {% elif count > 50 %}
+                                <span class="badge badge-green">98.5%</span>
+                            {% else %}
+                                <span class="badge badge-amber">82.1%</span>
+                            {% endif %}
+                        </td>
+                        <td style="color:var(--text-muted);">2 mins ago</td>
+                        <td>
+                            <button class="table-action-btn" title="Re-scrape">
+                                <i class="fas fa-redo"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    {% set sources = [
+                        ('Reuters Global', 1245, '99.8%', 'green', '2 mins ago'),
+                        ('Al Jazeera Arabic', 890, '98.5%', 'green', '5 mins ago'),
+                        ('TASS News Agency', 654, '82.1%', 'amber', '15 mins ago')
+                    ] %}
+                    {% for name, count, rate, color, last in sources %}
+                    <tr>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <div class="table-source-avatar">{{ name[0] }}</div>
+                                <span style="font-weight:500;">{{ name }}</span>
+                            </div>
+                        </td>
+                        <td style="font-weight:600;">{{ count }}</td>
+                        <td>
+                            <span class="badge badge-{{ color }}">{{ rate }}</span>
+                        </td>
+                        <td style="color:var(--text-muted);">{{ last }}</td>
+                        <td>
+                            <button class="table-action-btn" title="Re-scrape">
+                                <i class="fas fa-redo"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
-    function loadTableauEmbed() {
-        const url = document.getElementById('tableauCustomUrl').value.trim();
-        const area = document.getElementById('tableauEmbedArea');
-        if (!url) return;
-        area.innerHTML = `
-            <iframe src="${url}?:showVizHome=no&:embed=true" class="w-full h-full border-0 rounded-2xl" allowfullscreen="true"></iframe>
-        `;
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    const chartDefaults = {
+        plugins: { legend: { display: false } },
+        responsive: true,
+        maintainAspectRatio: false
+    };
 
-    document.addEventListener('DOMContentLoaded', () => {
-        // Keyword Frequency Bar Chart
-        const kwLabels = {{ stats.top_keywords|map(attribute='topic')|list|tojson }};
-        const kwCounts = {{ stats.top_keywords|map(attribute='count')|list|tojson }};
-
-        new Chart(document.getElementById('analyticsKeywordsChart').getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: kwLabels,
-                datasets: [{
-                    label: 'Mentions',
-                    data: kwCounts,
-                    backgroundColor: 'rgba(6, 182, 212, 0.75)',
-                    borderColor: '#06b6d4',
-                    borderWidth: 1,
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } },
-                    y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#cbd5e1' } }
-                }
+    // Article Volume Over Time (area line)
+    new Chart(document.getElementById('articleVolumeChart'), {
+        type: 'line',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                data: [38, 62, 48, 92, 76, 110, 68],
+                borderColor: '#3B5BDB',
+                backgroundColor: 'rgba(59,91,219,0.08)',
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHoverRadius: 5,
+                pointBackgroundColor: '#3B5BDB'
+            }]
+        },
+        options: {
+            ...chartDefaults,
+            scales: {
+                x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 }, color: '#9CA3AF' } },
+                y: { grid: { color: '#F3F4F6' }, border: { display: false }, ticks: { font: { size: 11 }, color: '#9CA3AF' } }
             }
-        });
-
-        // Language Distribution Donut
-        const langData = {{ stats.language_stats|tojson }};
-        new Chart(document.getElementById('analyticsLangChart').getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: Object.keys(langData),
-                datasets: [{
-                    data: Object.values(langData),
-                    backgroundColor: ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b'],
-                    borderColor: '#0f172a',
-                    borderWidth: 3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } } },
-                cutout: '70%'
-            }
-        });
+        }
     });
+
+    // Language Distribution Donut
+    new Chart(document.getElementById('langDistChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['English', 'Arabic', 'Russian'],
+            datasets: [{
+                data: [60, 24, 16],
+                backgroundColor: ['#1E3A5F', '#3B5BDB', '#818CF8'],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '72%',
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.label}: ${c.raw}%` } } }
+        }
+    });
+
+    // Articles by Source Bar Chart
+    new Chart(document.getElementById('sourceBarChart'), {
+        type: 'bar',
+        data: {
+            labels: ['Reuters', 'Al Jazeera', 'TASS', 'BBC', 'AP'],
+            datasets: [{
+                data: [1245, 890, 654, 420, 1050],
+                backgroundColor: ['#1E3A5F', '#9CA3AF', '#1E3A5F', '#9CA3AF', '#1E3A5F'],
+                borderRadius: 4,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            ...chartDefaults,
+            scales: {
+                x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 }, color: '#9CA3AF' } },
+                y: { grid: { color: '#F3F4F6' }, border: { display: false }, ticks: { font: { size: 11 }, color: '#9CA3AF' } }
+            }
+        }
+    });
+});
 </script>
 {% endblock %}

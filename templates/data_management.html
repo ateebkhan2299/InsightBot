@@ -2,119 +2,185 @@
 {% block title %}Data Management — InsightBot{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto py-2 space-y-8">
 
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-800">
-        <div>
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-2">
-                <i class="fas fa-database"></i> Storage & Datasets
-            </div>
-            <h1 class="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight">
-                Data Management & Schema Hub
-            </h1>
-            <p class="text-xs sm:text-sm text-slate-400 mt-1">
-                SRS Requirement iv: Structured content storage in JSON and CSV formats for analytics and modeling.
-            </p>
-        </div>
-
-        <div class="flex items-center gap-2.5">
-            <a href="{{ url_for('api.export_data', format_type='tableau') }}" 
-               class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md transition-all flex items-center gap-2">
-                <i class="fas fa-file-csv text-sm"></i>
-                <span>Download Tableau CSV</span>
-            </a>
-            
-            <a href="{{ url_for('api.export_data', format_type='json') }}" 
-               class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-semibold border border-slate-800 transition-all flex items-center gap-2">
-                <i class="fas fa-file-code text-cyan-400"></i>
-                <span>Download JSON</span>
-            </a>
-        </div>
+<!-- HEADER -->
+<div class="page-header-row" style="margin-bottom:24px;">
+    <div>
+        <h1 style="font-size:26px;font-weight:700;color:var(--text-primary);letter-spacing:-0.5px;">
+            Data Management &amp; Dataset Hub
+        </h1>
+        <p style="font-size:13.5px;color:var(--text-secondary);margin-top:4px;">
+            View extracted articles, manage sources, and download CSV / JSON exports for analysis.
+        </p>
     </div>
-
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <!-- 1. STORAGE STATS                                                       -->
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">MongoDB Collection</span>
-            <div class="text-2xl font-extrabold text-white mt-2 font-heading">insightbot_db.articles</div>
-            <div class="text-[11px] text-emerald-400 font-medium mt-1">{{ stats.total_articles }} Total Documents</div>
-        </div>
-
-        <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">CSV Export Output</span>
-            <div class="text-2xl font-extrabold text-cyan-400 mt-2 font-heading">tableau_export.csv</div>
-            <div class="text-[11px] text-slate-400 font-medium mt-1">UTF-8 Encoded for Tableau Desktop</div>
-        </div>
-
-        <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">JSON Export Output</span>
-            <div class="text-2xl font-extrabold text-indigo-400 mt-2 font-heading">articles.json</div>
-            <div class="text-[11px] text-slate-400 font-medium mt-1">Structured Multilingual Corpus</div>
-        </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+        <select id="sourceLangFilter" onchange="filterSourcesByLang(this.value)" class="form-input" style="width:auto;padding:9px 36px 9px 14px;font-size:13px;font-weight:600;cursor:pointer;">
+            <option value="all">All Languages</option>
+            <option value="English">English (EN)</option>
+            <option value="Arabic">Arabic (AR)</option>
+            <option value="Russian">Russian (RU)</option>
+        </select>
+        <a href="{{ url_for('api.export_data', format_type='csv') }}" class="btn btn-secondary">
+            <i class="fas fa-download" style="font-size:11px;"></i> Export CSV
+        </a>
+        <a href="{{ url_for('api.export_data', format_type='json') }}" class="btn btn-secondary">
+            <i class="fas fa-file-code" style="font-size:11px;"></i> Export JSON
+        </a>
     </div>
-
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <!-- 2. DATA TABLE OF INGESTED ARTICLES                                     -->
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <div class="p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-            <div>
-                <h3 class="text-base font-heading font-bold text-white">Stored Articles Table</h3>
-                <p class="text-xs text-slate-400">Structured records with extracted metadata and word count</p>
-            </div>
-            <span class="text-xs text-slate-400">Showing {{ articles|length }} records</span>
-        </div>
-
-        <div class="overflow-x-auto rounded-2xl border border-slate-800">
-            <table class="w-full text-left text-xs">
-                <thead class="bg-slate-950 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-800">
-                    <tr>
-                        <th class="px-4 py-3.5">Language</th>
-                        <th class="px-4 py-3.5">Title</th>
-                        <th class="px-4 py-3.5">Source Domain</th>
-                        <th class="px-4 py-3.5">Word Count</th>
-                        <th class="px-4 py-3.5">Date</th>
-                        <th class="px-4 py-3.5 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-800/80">
-                    {% for article in articles %}
-                        <tr class="hover:bg-slate-800/30 transition-colors">
-                            <td class="px-4 py-3.5 font-semibold">
-                                {% if article.language == 'Arabic' %}
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Arabic</span>
-                                {% elif article.language == 'Russian' %}
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">Russian</span>
-                                {% else %}
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">English</span>
-                                {% endif %}
-                            </td>
-                            <td class="px-4 py-3.5 font-medium text-white max-w-xs truncate" title="{{ article.title }}">
-                                {{ article.title }}
-                            </td>
-                            <td class="px-4 py-3.5 text-slate-400 font-mono text-[11px]">
-                                {{ article.source_url|domain_name }}
-                            </td>
-                            <td class="px-4 py-3.5 text-slate-300 font-bold">
-                                {{ article.body|wordcount }} words
-                            </td>
-                            <td class="px-4 py-3.5 text-slate-400">
-                                {{ article.publication_date or 'Recent' }}
-                            </td>
-                            <td class="px-4 py-3.5 text-right">
-                                <a href="{{ url_for('api.article_detail', title=article.title) }}" class="text-cyan-400 hover:text-cyan-300 font-semibold">
-                                    View &rarr;
-                                </a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
 </div>
+
+<!-- STAT CARDS -->
+<div class="stat-cards-grid" style="margin-bottom:24px;">
+    <div class="stat-card">
+        <div class="stat-card-label">
+            Total Articles
+            <div class="stat-card-icon blue"><i class="fas fa-newspaper"></i></div>
+        </div>
+        <div class="stat-card-value">{{ stats.total_articles if stats else 0 }}</div>
+        <div class="stat-card-meta"><span>Ingested into database</span></div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-label">
+            English
+            <div class="stat-card-icon blue"><i class="fas fa-globe"></i></div>
+        </div>
+        <div class="stat-card-value">{{ stats.english if stats else 0 }}</div>
+        <div class="stat-card-meta"><span>English-language articles</span></div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-label">
+            Arabic
+            <div class="stat-card-icon blue"><i class="fas fa-globe"></i></div>
+        </div>
+        <div class="stat-card-value">{{ stats.arabic if stats else 0 }}</div>
+        <div class="stat-card-meta"><span>Arabic-language articles</span></div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-label">
+            Russian
+            <div class="stat-card-icon blue"><i class="fas fa-globe"></i></div>
+        </div>
+        <div class="stat-card-value">{{ stats.russian if stats else 0 }}</div>
+        <div class="stat-card-meta"><span>Russian-language articles</span></div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card-label">
+            Sources
+            <div class="stat-card-icon green"><i class="fas fa-database"></i></div>
+        </div>
+        <div class="stat-card-value">{{ stats.unique_sources if stats else 0 }}</div>
+        <div class="stat-card-meta"><span>Unique news domains</span></div>
+    </div>
+</div>
+
+<!-- ARTICLES TABLE -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <div class="card-title">Extracted Articles</div>
+            <div class="card-subtitle">Most recently ingested articles (showing up to 50)</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <button class="table-action-btn" title="Filter" onclick="document.getElementById('sourceLangFilter').focus()">
+                <i class="fas fa-filter"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="data-table-wrap">
+        <table class="data-table" id="sourcesTable">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Language</th>
+                    <th>Source</th>
+                    <th>Words</th>
+                    <th>Date</th>
+                    <th style="text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if articles %}
+                    {% for article in articles %}
+                    <tr data-lang="{{ article.language or 'English' }}">
+                        <td>
+                            <div style="max-width:360px;">
+                                <a href="{{ url_for('api.article_detail', title=article.title) }}" style="font-weight:600;font-size:13.5px;color:var(--text-primary);text-decoration:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                    {{ article.title }}
+                                </a>
+                                <div style="font-size:12px;color:var(--text-muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:350px;">
+                                    {{ article.body|snippet(100) }}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge {% if article.language == 'Arabic' %}badge-green{% elif article.language == 'Russian' %}badge-primary{% else %}badge-blue{% endif %}">
+                                {{ article.language or 'EN' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span style="font-size:12.5px;color:var(--text-secondary);font-weight:500;">
+                                {{ article.source_url|domain_name }}
+                            </span>
+                        </td>
+                        <td style="font-weight:600;font-size:13px;">
+                            {{ article.body|wordcount }}
+                        </td>
+                        <td style="font-size:12.5px;color:var(--text-muted);">
+                            {{ article.publication_date or 'N/A' }}
+                        </td>
+                        <td style="text-align:right;">
+                            <a href="{{ url_for('api.article_detail', title=article.title) }}" class="table-action-btn" title="Read Article">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align:center;padding:48px;color:var(--text-muted);font-style:italic;">
+                            No articles found in the database. Use the Scraper to ingest news content.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <div style="padding:14px 20px;border-top:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:12.5px;color:var(--text-muted);">
+            Showing {{ articles|length }} articles
+        </span>
+        <div style="display:flex;gap:6px;">
+            <a href="{{ url_for('api.export_data', format_type='csv') }}" class="btn btn-sm btn-secondary">
+                <i class="fas fa-file-csv" style="font-size:10px;"></i> CSV
+            </a>
+            <a href="{{ url_for('api.export_data', format_type='json') }}" class="btn btn-sm btn-secondary">
+                <i class="fas fa-file-code" style="font-size:10px;"></i> JSON
+            </a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterSourcesByLang(lang) {
+    const rows = document.querySelectorAll('#sourcesTable tbody tr');
+    rows.forEach(row => {
+        const rowLang = row.getAttribute('data-lang');
+        if (!rowLang) return;
+        if (lang === 'all' || rowLang === lang) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+</script>
 {% endblock %}

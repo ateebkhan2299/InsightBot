@@ -43,7 +43,7 @@ def run_smoke_test():
     try:
         print("[STEP 2] Simulating manual admin approval via MongoDB...", end=" ")
         users_coll = db_connection.get_collection('users')
-        result = users_coll.update_one({"username": test_username}, {"$set": {"is_approved": True}})
+        result = users_coll.update_one({"username": test_username}, {"$set": {"approved": True}})
         if result.modified_count == 1:
             print("PASS")
         else:

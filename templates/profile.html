@@ -2,174 +2,93 @@
 {% block title %}User Profile — InsightBot{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto py-2 space-y-8">
 
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-800">
-        <div>
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-2">
-                <i class="fas fa-user-circle"></i> User Account Workspace
+<!-- HEADER -->
+<div class="page-header-row" style="margin-bottom:24px;">
+    <div>
+        <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--primary-light);border:1px solid var(--primary-mid);border-radius:99px;font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
+            <i class="fas fa-user-circle"></i> User Account Workspace
+        </div>
+        <h1 style="font-size:26px;font-weight:700;color:var(--text-primary);letter-spacing:-0.5px;">
+            Profile &amp; Access Control
+        </h1>
+        <p style="font-size:13.5px;color:var(--text-secondary);margin-top:4px;">
+            Manage your credentials and account settings.
+        </p>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:280px 1fr;gap:18px;align-items:start;">
+
+    <!-- LEFT: User Card -->
+    <div class="card" style="padding:24px;display:flex;flex-direction:column;align-items:center;text-align:center;">
+        <div style="position:relative;margin-bottom:16px;">
+            <div style="width:80px;height:80px;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));padding:2px;box-shadow:var(--shadow-md);">
+                <div style="width:100%;height:100%;background:var(--primary-light);border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:28px;font-weight:800;">
+                    {{ user.fullname[:2] }}
+                </div>
             </div>
-            <h1 class="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight">
-                Profile & Access Control
-            </h1>
-            <p class="text-xs sm:text-sm text-slate-400 mt-1">
-                Manage your credentials, query API tokens, and access database configurations safely.
-            </p>
+            <span style="position:absolute;bottom:0;right:0;width:20px;height:20px;background:var(--accent-green);border:2px solid var(--surface);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:10px;">
+                <i class="fas fa-check"></i>
+            </span>
+        </div>
+
+        <h3 style="font-size:16px;font-weight:700;color:var(--text-primary);text-transform:uppercase;letter-spacing:0.3px;">{{ user.fullname }}</h3>
+        <span style="font-size:13px;color:var(--text-muted);margin-top:2px;">{{ user.email }}</span>
+
+        <div class="badge badge-blue" style="margin-top:10px;">
+            <i class="fas fa-shield-alt" style="margin-right:4px;"></i> {{ user.role }}
+        </div>
+
+        <div style="width:100%;margin-top:16px;padding-top:14px;border-top:1px solid var(--border-light);text-align:left;font-size:12.5px;color:var(--text-muted);">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span style="text-transform:uppercase;font-size:11px;letter-spacing:0.5px;">Registered</span>
+                <strong style="color:var(--text-secondary);font-family:monospace;">{{ user.registered_date }}</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;">
+                <span style="text-transform:uppercase;font-size:11px;letter-spacing:0.5px;">Language</span>
+                <strong style="color:var(--text-secondary);">{{ user.language }}</strong>
+            </div>
         </div>
     </div>
 
-    <!-- Profile Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        <!-- Left Column: User Card -->
-        <div class="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl flex flex-col items-center text-center space-y-4">
-            <div class="relative">
-                <div class="w-24 h-24 rounded-2xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 p-[1.5px] shadow-lg shadow-cyan-500/10">
-                    <div class="w-full h-full bg-slate-950 rounded-2xl flex items-center justify-center text-white text-3xl font-bold uppercase">
-                        {{ user.fullname[:2] }}
-                    </div>
-                </div>
-                <span class="absolute bottom-1 right-1 w-4.5 h-4.5 bg-emerald-500 border-2 border-slate-900 rounded-full flex items-center justify-center text-[8px] text-white" title="Active Account">
-                    <i class="fas fa-check"></i>
-                </span>
+    <!-- RIGHT: Account Details Form -->
+    <div class="card" style="padding:24px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+            <div style="width:36px;height:36px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:16px;">
+                <i class="fas fa-user-edit"></i>
             </div>
-            
-            <div>
-                <h3 class="text-lg font-heading font-bold text-white leading-tight">{{ user.fullname }}</h3>
-                <span class="text-xs text-slate-400 mt-0.5 block">{{ user.email }}</span>
-            </div>
-            
-            <div class="px-3 py-1.5 rounded-xl bg-cyan-500/10 text-cyan-400 text-[10px] font-bold border border-cyan-500/20 uppercase tracking-wider">
-                <i class="fas fa-shield-alt mr-1"></i> {{ user.role }}
-            </div>
-            
-            <div class="w-full pt-4 border-t border-slate-800/80 text-left text-xs space-y-2.5 text-slate-400">
-                <div class="flex justify-between">
-                    <span>Organization</span>
-                    <strong class="text-slate-200">Data Science Division</strong>
-                </div>
-                <div class="flex justify-between">
-                    <span>Registered</span>
-                    <strong class="text-slate-200">2026-08-15</strong>
-                </div>
-                <div class="flex justify-between">
-                    <span>Assigned Language</span>
-                    <strong class="text-slate-200">{{ user.language }}</strong>
-                </div>
-            </div>
+            <h3 style="font-size:13px;font-weight:700;color:var(--text-primary);text-transform:uppercase;letter-spacing:0.5px;">Account Details</h3>
         </div>
 
-        <!-- Right Column: Profile Edit & masked credentials -->
-        <div class="md:col-span-2 space-y-6">
-            
-            <!-- User Information Form -->
-            <div class="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-5">
-                <h3 class="text-base font-heading font-bold text-white flex items-center gap-2">
-                    <i class="fas fa-user-edit text-cyan-400"></i> Account details
-                </h3>
-                
-                <form method="POST" action="{{ url_for('api.profile') }}" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="form-group">
-                        <label for="profName" class="form-label text-xs">Full Name</label>
-                        <input type="text" id="profName" value="{{ user.fullname }}" required
-                               class="form-control text-xs bg-slate-950 border-slate-800 rounded-xl mt-1 text-white">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="profEmail" class="form-label text-xs">Email Address</label>
-                        <input type="email" id="profEmail" value="{{ user.email }}" required
-                               class="form-control text-xs bg-slate-950 border-slate-800 rounded-xl mt-1 text-white">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="profPass" class="form-label text-xs">Change Password</label>
-                        <input type="password" id="profPass" placeholder="••••••••"
-                               class="form-control text-xs bg-slate-950 border-slate-800 rounded-xl mt-1 text-white">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="profConfPass" class="form-label text-xs">Confirm Password</label>
-                        <input type="password" id="profConfPass" placeholder="••••••••"
-                               class="form-control text-xs bg-slate-950 border-slate-800 rounded-xl mt-1 text-white">
-                    </div>
-
-                    <div class="sm:col-span-2 flex justify-end pt-2">
-                        <button type="submit" class="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-md transition-all">
-                            Update Details
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Masked Credentials Section -->
-            <div class="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-5">
+        <form method="POST" action="{{ url_for('api.profile') }}" style="display:flex;flex-direction:column;gap:16px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                 <div>
-                    <h3 class="text-base font-heading font-bold text-white flex items-center gap-2">
-                        <i class="fas fa-key text-cyan-400"></i> Platform Keys & Pipelines Credentials
-                    </h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Sensitive configuration parameters masked by default to comply with Security UX guidelines.</p>
+                    <label class="form-label">Full Name</label>
+                    <input type="text" name="fullname" value="{{ user.fullname }}" required class="form-input">
                 </div>
-                
-                <div class="space-y-4">
-                    
-                    <!-- API Key -->
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">InsightBot API Access Token</label>
-                        <div class="relative flex items-center bg-slate-950 border border-slate-800 rounded-xl overflow-hidden p-1">
-                            <input type="password" readonly value="{{ user.api_key }}" id="apiKeyField"
-                                   class="w-full bg-transparent border-none text-xs text-slate-200 outline-none pl-3 pr-10 py-2 font-mono">
-                            <button onclick="toggleVisibility('apiKeyField', 'apiKeyBtn')" id="apiKeyBtn" class="absolute right-2 px-2 py-1 text-slate-400 hover:text-white text-xs">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- MongoDB URI -->
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">MongoDB Database Connection URI</label>
-                        <div class="relative flex items-center bg-slate-950 border border-slate-800 rounded-xl overflow-hidden p-1">
-                            <input type="password" readonly value="{{ user.mongodb_uri }}" id="dbUriField"
-                                   class="w-full bg-transparent border-none text-xs text-slate-200 outline-none pl-3 pr-10 py-2 font-mono">
-                            <button onclick="toggleVisibility('dbUriField', 'dbUriBtn')" id="dbUriBtn" class="absolute right-2 px-2 py-1 text-slate-400 hover:text-white text-xs">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Tableau Server URL -->
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Tableau Analytics Integration URL</label>
-                        <div class="relative flex items-center bg-slate-950 border border-slate-800 rounded-xl overflow-hidden p-1">
-                            <input type="password" readonly value="{{ user.tableau_url }}" id="tabUrlField"
-                                   class="w-full bg-transparent border-none text-xs text-slate-200 outline-none pl-3 pr-10 py-2 font-mono">
-                            <button onclick="toggleVisibility('tabUrlField', 'tabUrlBtn')" id="tabUrlBtn" class="absolute right-2 px-2 py-1 text-slate-400 hover:text-white text-xs">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-
+                <div>
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="email" value="{{ user.email }}" required class="form-input">
+                </div>
+                <div>
+                    <label class="form-label">New Password</label>
+                    <input type="password" name="password" placeholder="Leave blank to keep current" class="form-input">
+                </div>
+                <div>
+                    <label class="form-label">Confirm Password</label>
+                    <input type="password" name="confirm_password" placeholder="Confirm new password" class="form-input">
                 </div>
             </div>
-
-        </div>
+            <div style="display:flex;justify-content:flex-end;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save" style="font-size:11px;"></i>
+                    Update Details
+                </button>
+            </div>
+        </form>
     </div>
 
 </div>
 
-<script>
-function toggleVisibility(fieldId, btnId) {
-    const input = document.getElementById(fieldId);
-    const btn = document.getElementById(btnId);
-    const icon = btn.querySelector('i');
-    
-    if (input.type === "password") {
-        input.type = "text";
-        icon.className = "fas fa-eye-slash";
-    } else {
-        input.type = "password";
-        icon.className = "fas fa-eye";
-    }
-}
-</script>
 {% endblock %}

@@ -2,145 +2,164 @@
 {% block title %}DOM Pattern Mining — InsightBot{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto py-2 space-y-8">
 
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-800">
+<!-- HEADER -->
+<div class="page-header-row" style="margin-bottom:24px;">
+    <div>
+        <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--primary-light);border:1px solid var(--primary-mid);border-radius:99px;font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
+            <i class="fas fa-network-wired"></i> Data Science Model
+        </div>
+        <h1 style="font-size:26px;font-weight:700;color:var(--text-primary);letter-spacing:-0.5px;line-height:1.2;">
+            DOM Pattern Mining & Structural Rules
+        </h1>
+        <p style="font-size:13.5px;color:var(--text-secondary);margin-top:4px;">
+            Visualizing the learned CSS selectors and rules used by the scraper. InsightBot automatically scans the HTML tree to detect titles and article bodies without needing custom code.
+        </p>
+    </div>
+    <span style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;color:var(--primary);">
+        <span style="width:6px;height:6px;border-radius:50%;background:var(--primary);animation:pulse 1.8s infinite;"></span>
+        Active Model: DOM Rules
+    </span>
+</div>
+
+<!-- EXPLANATORY BANNER -->
+<div class="card" style="padding:20px;margin-bottom:18px;">
+    <div style="display:flex;align-items:flex-start;gap:14px;">
+        <div style="width:36px;height:36px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:16px;flex-shrink:0;">
+            <i class="fas fa-brain"></i>
+        </div>
         <div>
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-2">
-                <i class="fas fa-network-wired"></i> Data Science Model
-            </div>
-            <h1 class="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight">
-                DOM Pattern Mining & Structural Rules
-            </h1>
-            <p class="text-xs sm:text-sm text-slate-400 mt-1">
-                Visualizing the learned structural patterns, CSS selector hierarchies, and text density thresholds.
+            <h3 style="font-size:13px;font-weight:700;color:var(--text-primary);text-transform:uppercase;letter-spacing:0.5px;">How DOM Pattern Mining Works</h3>
+            <p style="font-size:13px;color:var(--text-secondary);margin-top:6px;line-height:1.6;">
+                Different news websites use different code structures (templates) to display their headlines and articles. Instead of a developer manually writing custom scraping code for every new website, <strong>InsightBot automatically analyzes the HTML layout</strong> (called the Document Object Model or DOM) to detect text density patterns. It dynamically learns the matching CSS class selectors for the Title and Body elements.
             </p>
         </div>
+    </div>
+</div>
 
-        <div class="flex items-center gap-2">
-            <span class="px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold text-cyan-400">
-                Model: <strong>Document Object Model (DOM) Rules</strong>
-            </span>
+<!-- TRAINING SUMMARY STATS CARDS -->
+<div class="stat-cards-grid" style="margin-bottom:18px;">
+    <div class="stat-card">
+        <div class="stat-card-label">
+            Websites Trained
+            <div class="stat-card-icon blue"><i class="fas fa-graduation-cap"></i></div>
+        </div>
+        <div class="stat-card-value">{{ rules.training_stats.pages_trained if rules.training_stats else 40 }}</div>
+        <div class="stat-card-meta">
+            <span style="color:var(--accent-green);font-weight:600;">30 News Pages Trained</span>
         </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <!-- 1. TRAINING SUMMARY STATS CARDS                                        -->
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Websites Trained</span>
-            <div class="text-3xl font-extrabold text-white mt-2 font-heading">
-                {{ rules.training_stats.pages_trained if rules.training_stats else 30 }}
-            </div>
-            <div class="text-[11px] text-emerald-400 font-medium mt-1">30 Multilingual News Pages</div>
+    <div class="stat-card">
+        <div class="stat-card-label">
+            Title Selectors
+            <div class="stat-card-icon blue"><i class="fas fa-heading"></i></div>
         </div>
-
-        <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Title Selectors</span>
-            <div class="text-3xl font-extrabold text-cyan-400 mt-2 font-heading">
-                {{ rules.title_selectors|length if rules.title_selectors else 9 }}
-            </div>
-            <div class="text-[11px] text-slate-400 font-medium mt-1">h1, h2, og:title, hierarchy</div>
-        </div>
-
-        <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Body Selectors</span>
-            <div class="text-3xl font-extrabold text-indigo-400 mt-2 font-heading">
-                {{ rules.body_selectors|length if rules.body_selectors else 9 }}
-            </div>
-            <div class="text-[11px] text-slate-400 font-medium mt-1">article, main, density block</div>
-        </div>
-
-        <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Density Threshold</span>
-            <div class="text-3xl font-extrabold text-emerald-400 mt-2 font-heading">100+</div>
-            <div class="text-[11px] text-slate-400 font-medium mt-1">Characters per paragraph</div>
+        <div class="stat-card-value" style="color:var(--primary);">{{ rules.title_selectors|length if rules.title_selectors else 9 }}</div>
+        <div class="stat-card-meta">
+            <span style="color:var(--text-muted);">Meta &amp; Heading Rules</span>
         </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <!-- 2. VISUAL DOM TREE REPRESENTATION                                      -->
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <div class="p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-6">
-        <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 text-lg">
-                <i class="fas fa-sitemap"></i>
-            </div>
-            <div>
-                <h3 class="text-lg font-heading font-bold text-white">Structural DOM Tree Hierarchy</h3>
-                <p class="text-xs text-slate-400">Visual mapping of how HTML tags are filtered and content nodes are isolated.</p>
-            </div>
+    <div class="stat-card">
+        <div class="stat-card-label">
+            Body Selectors
+            <div class="stat-card-icon navy"><i class="fas fa-paragraph"></i></div>
         </div>
-
-        <div class="p-6 rounded-2xl bg-slate-950 font-mono text-xs text-slate-300 border border-slate-800 overflow-x-auto leading-relaxed">
-            <div class="text-slate-500">&lt;!DOCTYPE html&gt;</div>
-            <div>&lt;<span class="text-cyan-400">html</span>&gt;</div>
-            <div class="pl-4">&lt;<span class="text-cyan-400">head</span>&gt; <span class="text-slate-500">&lt;!-- &lt;meta property="og:title"&gt; [Fallback Title] --&gt;</span> &lt;/<span class="text-cyan-400">head</span>&gt;</div>
-            <div class="pl-4">&lt;<span class="text-cyan-400">body</span>&gt;</div>
-            <div class="pl-8 text-rose-400 line-through opacity-60">&lt;header&gt; ... &lt;/header&gt; [Stripped by Preprocessing]</div>
-            <div class="pl-8 text-rose-400 line-through opacity-60">&lt;nav&gt; ... &lt;/nav&gt; [Stripped Boilerplate]</div>
-            <div class="pl-8 text-cyan-300">&lt;<span class="text-cyan-400 font-bold">main</span> | <span class="text-indigo-400 font-bold">article</span>&gt;</div>
-            <div class="pl-12 bg-cyan-500/10 p-2 rounded-lg border border-cyan-500/30 text-white my-1 inline-block">
-                &lt;<span class="text-cyan-400 font-bold">h1</span> class="headline"&gt; &larr; <strong class="text-cyan-300">TITLE DETECTED</strong> (Dominant Header Hierarchy)
-            </div>
-            <div class="pl-12 bg-indigo-500/10 p-2 rounded-lg border border-indigo-500/30 text-white my-1 block">
-                &lt;<span class="text-indigo-400 font-bold">div</span> class="story-body"&gt; &larr; <strong class="text-indigo-300">ARTICLE BODY DETECTED</strong> (Paragraph Density Clustering)
-                <div class="pl-4 text-slate-400 mt-1">&lt;p&gt; Paragraph 1 (250 chars) &lt;/p&gt;</div>
-                <div class="pl-4 text-slate-400">&lt;p&gt; Paragraph 2 (180 chars) &lt;/p&gt;</div>
-            </div>
-            <div class="pl-8 text-rose-400 line-through opacity-60">&lt;aside&gt; &lt;!-- Ads & Widgets --&gt; &lt;/aside&gt; [Stripped]</div>
-            <div class="pl-8 text-rose-400 line-through opacity-60">&lt;footer&gt; ... &lt;/footer&gt; [Stripped]</div>
-            <div class="pl-4">&lt;/<span class="text-cyan-400">body</span>&gt;</div>
-            <div>&lt;/<span class="text-cyan-400">html</span>&gt;</div>
+        <div class="stat-card-value" style="color:var(--primary);">{{ rules.body_selectors|length if rules.body_selectors else 9 }}</div>
+        <div class="stat-card-meta">
+            <span style="color:var(--text-muted);">Article Content Blocks</span>
         </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <!-- 3. MINED SELECTOR FREQUENCIES TABLE                                    -->
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        <!-- Title Selectors -->
-        <div class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
-            <h3 class="text-base font-heading font-bold text-white flex items-center gap-2">
-                <i class="fas fa-heading text-cyan-400"></i> Learned Title Selectors
-            </h3>
-            <div class="space-y-2">
-                {% if rules.title_selectors %}
-                    {% for sel in rules.title_selectors %}
-                        <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between text-xs">
-                            <span class="font-mono text-cyan-400">{{ sel }}</span>
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-300">Active Rule</span>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-xs text-slate-400">No title rules loaded.</p>
-                {% endif %}
-            </div>
+    <div class="stat-card">
+        <div class="stat-card-label">
+            Density Threshold
+            <div class="stat-card-icon green"><i class="fas fa-ruler-combined"></i></div>
         </div>
-
-        <!-- Body Selectors -->
-        <div class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
-            <h3 class="text-base font-heading font-bold text-white flex items-center gap-2">
-                <i class="fas fa-paragraph text-indigo-400"></i> Learned Body Selectors
-            </h3>
-            <div class="space-y-2">
-                {% if rules.body_selectors %}
-                    {% for sel in rules.body_selectors %}
-                        <div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between text-xs">
-                            <span class="font-mono text-indigo-400">{{ sel }}</span>
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/10 text-indigo-300">Active Rule</span>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-xs text-slate-400">No body rules loaded.</p>
-                {% endif %}
-            </div>
+        <div class="stat-card-value" style="color:var(--accent-green);">100+</div>
+        <div class="stat-card-meta">
+            <span style="color:var(--text-muted);">Characters per paragraph</span>
         </div>
+    </div>
+</div>
 
+<!-- VISUAL DOM TREE REPRESENTATION -->
+<div class="card" style="padding:24px;margin-bottom:18px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <div style="width:36px;height:36px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:16px;">
+            <i class="fas fa-sitemap"></i>
+        </div>
+        <div>
+            <h3 style="font-size:13px;font-weight:700;color:var(--text-primary);text-transform:uppercase;letter-spacing:0.5px;">Structural DOM Tree Hierarchy</h3>
+            <p style="font-size:12px;color:var(--text-muted);margin-top:2px;">Visual mapping of how HTML tags are filtered and content nodes are isolated.</p>
+        </div>
+    </div>
+
+    <div style="padding:16px;background:var(--gray-50);font-family:'Courier New',monospace;font-size:12px;color:var(--gray-700);border:1px solid var(--border);border-radius:8px;overflow-x:auto;line-height:1.8;">
+        <div style="color:var(--text-muted);font-weight:700;">&lt;!DOCTYPE html&gt;</div>
+        <div>&lt;<span style="color:var(--primary);font-weight:700;">html</span>&gt;</div>
+        <div style="padding-left:16px;">&lt;<span style="color:var(--primary);font-weight:700;">head</span>&gt; &lt;!-- &lt;meta property="og:title"&gt; [Fallback Title Value] --&gt; &lt;/<span style="color:var(--primary);font-weight:700;">head</span>&gt;</div>
+        <div style="padding-left:16px;">&lt;<span style="color:var(--primary);font-weight:700;">body</span>&gt;</div>
+        <div style="padding-left:32px;color:var(--accent-red);text-decoration:line-through;opacity:0.6;">&lt;header&gt; ... &lt;/header&gt; [Stripped: Navigation Boilerplate]</div>
+        <div style="padding-left:32px;color:var(--accent-red);text-decoration:line-through;opacity:0.6;">&lt;nav&gt; ... &lt;/nav&gt; [Stripped: Header Link Blocks]</div>
+        <div style="padding-left:32px;color:var(--primary);">&lt;<span style="font-weight:700;">main</span> | <span style="font-weight:700;">article</span>&gt;</div>
+        <div style="padding-left:48px;background:var(--primary-light);padding:6px 12px;border-radius:6px;border:1px solid var(--primary-mid);margin:4px 0;display:inline-block;">
+            &lt;<span style="color:var(--primary);font-weight:700;">h1</span> class="headline"&gt; &larr; <strong style="color:var(--primary);">TITLE DETECTED</strong> (Dominant Header Element)
+        </div>
+        <div style="padding-left:48px;background:var(--primary-light);padding:8px 12px;border-radius:6px;border:1px solid var(--primary-mid);margin:6px 0;display:block;">
+            &lt;<span style="color:var(--primary);font-weight:700;">div</span> class="story-body"&gt; &larr; <strong style="color:var(--primary);">ARTICLE BODY DETECTED</strong> (Text Density Clustering)
+            <div style="padding-left:16px;color:var(--text-muted);margin-top:6px;">&lt;p&gt; Paragraph 1 (250 chars) &lt;/p&gt;</div>
+            <div style="padding-left:16px;color:var(--text-muted);">&lt;p&gt; Paragraph 2 (180 chars) &lt;/p&gt;</div>
+        </div>
+        <div style="padding-left:32px;color:var(--accent-red);text-decoration:line-through;opacity:0.6;">&lt;aside&gt; &lt;!-- Related ads &amp; widgets --&gt; &lt;/aside&gt; [Stripped]</div>
+        <div style="padding-left:32px;color:var(--accent-red);text-decoration:line-through;opacity:0.6;">&lt;footer&gt; ... &lt;/footer&gt; [Stripped]</div>
+        <div style="padding-left:16px;">&lt;/<span style="color:var(--primary);font-weight:700;">body</span>&gt;</div>
+        <div>&lt;/<span style="color:var(--primary);font-weight:700;">html</span>&gt;</div>
+    </div>
+</div>
+
+<!-- MINED SELECTOR FREQUENCIES -->
+<div class="two-col-grid" style="margin-bottom:18px;">
+
+    <!-- Title Selectors -->
+    <div class="card" style="padding:20px;">
+        <h3 style="font-size:13px;font-weight:700;color:var(--text-primary);text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+            <i class="fas fa-heading" style="color:var(--primary);"></i> Learned Title Selectors
+        </h3>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+            {% if rules.title_selectors %}
+                {% for sel in rules.title_selectors %}
+                    <div style="padding:8px 12px;background:var(--primary-light);border:1px solid var(--primary-mid);border-radius:8px;display:flex;align-items:center;justify-content:space-between;font-size:12px;">
+                        <code style="font-family:'Courier New',monospace;color:var(--primary);font-weight:700;">{{ sel }}</code>
+                        <span class="badge badge-primary" style="font-size:10px;">Active Rule</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="font-size:13px;color:var(--text-muted);">No title rules loaded.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Body Selectors -->
+    <div class="card" style="padding:20px;">
+        <h3 style="font-size:13px;font-weight:700;color:var(--text-primary);text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+            <i class="fas fa-paragraph" style="color:var(--primary);"></i> Learned Body Selectors
+        </h3>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+            {% if rules.body_selectors %}
+                {% for sel in rules.body_selectors %}
+                    <div style="padding:8px 12px;background:var(--primary-light);border:1px solid var(--primary-mid);border-radius:8px;display:flex;align-items:center;justify-content:space-between;font-size:12px;">
+                        <code style="font-family:'Courier New',monospace;color:var(--primary);font-weight:700;">{{ sel }}</code>
+                        <span class="badge badge-primary" style="font-size:10px;">Active Rule</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="font-size:13px;color:var(--text-muted);">No body rules loaded.</p>
+            {% endif %}
+        </div>
     </div>
 
 </div>
+
 {% endblock %}

@@ -2,91 +2,89 @@
 {% block title %}Admin Control Panel — InsightBot{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto py-2 space-y-8">
-    
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-800">
-        <div>
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold uppercase tracking-wider mb-2">
-                <i class="fas fa-shield-alt"></i> Administration Panel
-            </div>
-            <h1 class="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight">
-                User Access & Permissions Control
-            </h1>
-            <p class="text-xs sm:text-sm text-slate-400 mt-1">
-                Approve newly registered accounts and oversee team authorizations.
-            </p>
+
+<!-- HEADER -->
+<div class="page-header-row" style="margin-bottom:24px;">
+    <div>
+        <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--accent-red-light, #FEE2E2);border:1px solid var(--accent-red-mid, #FECACA);border-radius:99px;font-size:11px;font-weight:700;color:var(--accent-red);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
+            <i class="fas fa-shield-alt"></i> Administration Panel
         </div>
-
-        <span class="px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-bold text-slate-300">
-            Total Users: <strong class="text-cyan-400">{{ users|length }}</strong>
-        </span>
+        <h1 style="font-size:26px;font-weight:700;color:var(--text-primary);letter-spacing:-0.5px;">
+            User Access &amp; Permissions Control
+        </h1>
+        <p style="font-size:13.5px;color:var(--text-secondary);margin-top:4px;">
+            Approve newly registered accounts and oversee team authorizations.
+        </p>
     </div>
-
-    <!-- Users Table -->
-    <div class="rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-                <thead class="bg-slate-950 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-800">
-                    <tr>
-                        <th class="px-6 py-4">User</th>
-                        <th class="px-6 py-4">Role</th>
-                        <th class="px-6 py-4">Status</th>
-                        <th class="px-6 py-4 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-800/80">
-                    {% for u in users %}
-                        <tr class="hover:bg-slate-800/30 transition-colors">
-                            <td class="px-6 py-4 font-medium text-white flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 text-xs font-bold uppercase">
-                                    {{ u.username[:2] }}
-                                </div>
-                                <span class="font-semibold">{{ u.username }}</span>
-                            </td>
-
-                            <td class="px-6 py-4">
-                                {% if u.is_admin %}
-                                    <span class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                                        <i class="fas fa-crown mr-1"></i> Administrator
-                                    </span>
-                                {% else %}
-                                    <span class="px-2.5 py-1 rounded-md text-[10px] font-medium bg-slate-800 text-slate-300">
-                                        Standard User
-                                    </span>
-                                {% endif %}
-                            </td>
-
-                            <td class="px-6 py-4">
-                                {% if u.approved %}
-                                    <span class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                        <i class="fas fa-check-circle mr-1"></i> Approved
-                                    </span>
-                                {% else %}
-                                    <span class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                                        <i class="fas fa-clock mr-1"></i> Pending Approval
-                                    </span>
-                                {% endif %}
-                            </td>
-
-                            <td class="px-6 py-4 text-right">
-                                {% if not u.approved %}
-                                    <form method="POST" action="{{ url_for('api.approve_user', user_id=u._id) }}" class="inline-block">
-                                        <button type="submit" class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow-sm transition-all flex items-center gap-1.5 ml-auto">
-                                            <i class="fas fa-check text-xs"></i>
-                                            <span>Approve User</span>
-                                        </button>
-                                    </form>
-                                {% else %}
-                                    <span class="text-[11px] text-slate-500 font-medium">Access Granted</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
+    <span style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;color:var(--primary);">
+        Total Users: <strong style="font-family:monospace;">{{ users|length }}</strong>
+    </span>
 </div>
+
+<!-- USERS TABLE -->
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">Registered Users</div>
+        <div class="card-subtitle">Manage approvals and role assignments</div>
+    </div>
+    <div class="data-table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th style="text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="width:32px;height:32px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:12px;font-weight:700;text-transform:uppercase;">
+                                {{ u.username[:2] }}
+                            </div>
+                            <span style="font-weight:600;font-size:13.5px;">{{ u.username }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        {% if u.is_admin %}
+                            <span class="badge badge-green">
+                                <i class="fas fa-crown" style="margin-right:3px;"></i> Administrator
+                            </span>
+                        {% else %}
+                            <span class="badge badge-blue">Standard User</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if u.approved %}
+                            <span class="badge badge-green">
+                                <i class="fas fa-check-circle" style="margin-right:3px;"></i> Approved
+                            </span>
+                        {% else %}
+                            <span class="badge badge-amber">
+                                <i class="fas fa-clock" style="margin-right:3px;"></i> Pending Approval
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:right;">
+                        {% if not u.approved %}
+                            <form method="POST" action="{{ url_for('api.approve_user', user_id=u._id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="fas fa-check" style="font-size:10px;"></i>
+                                    Approve User
+                                </button>
+                            </form>
+                        {% else %}
+                            <span style="font-size:12px;color:var(--text-muted);font-weight:600;">Access Granted</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 {% endblock %}

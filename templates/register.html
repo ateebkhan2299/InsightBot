@@ -2,47 +2,49 @@
 {% block title %}Create Account — InsightBot{% endblock %}
 
 {% block content %}
-<div class="max-w-md mx-auto py-12">
-    <div class="p-8 sm:p-10 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-6">
-        
-        <div class="text-center">
-            <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 text-xl mx-auto mb-3">
+<div style="max-width:480px;margin:20px auto;">
+    <div class="card" style="overflow:hidden;box-shadow:var(--shadow-lg);">
+
+        <div style="padding:36px;display:flex;flex-direction:column;align-items:center;text-align:center;">
+            <div style="width:48px;height:48px;background:var(--primary-light);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:20px;margin-bottom:16px;">
                 <i class="fas fa-user-plus"></i>
             </div>
-            <h2 class="text-2xl font-heading font-bold text-white">Create Account</h2>
-            <p class="text-xs text-slate-400 mt-1">Register for InsightBot intelligence access</p>
+            <h2 style="font-size:22px;font-weight:700;color:var(--text-primary);letter-spacing:-0.3px;">Create Account</h2>
+            <p style="font-size:13.5px;color:var(--text-secondary);margin-top:4px;">Register for InsightBot intelligence access</p>
         </div>
 
-        <form method="POST" action="{{ url_for('api.register') }}" class="space-y-4">
-            <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-1.5">Username</label>
-                <input type="text" name="username" required placeholder="Choose a username"
-                       class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all">
+        <div style="padding:0 36px 36px;">
+            <form method="POST" action="{{ url_for('api.register') }}" style="display:flex;flex-direction:column;gap:16px;">
+                <div>
+                    <label class="form-label">Username</label>
+                    <input type="text" name="username" required placeholder="Choose a username"
+                           class="form-input">
+                </div>
+
+                <div>
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" required placeholder="Minimum 6 characters"
+                           class="form-input">
+                </div>
+
+                <div style="padding:12px 14px;background:var(--primary-light);border:1px solid var(--primary-mid);border-radius:8px;font-size:13px;color:var(--primary-dark);display:flex;align-items:center;gap:8px;">
+                    <i class="fas fa-info-circle" style="flex-shrink:0;"></i>
+                    <span>Accounts with username <strong>admin</strong> receive instant administrator approval.</span>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">
+                    Register Account
+                    <i class="fas fa-arrow-right" style="font-size:12px;"></i>
+                </button>
+            </form>
+
+            <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border-light);text-align:center;font-size:13.5px;color:var(--text-muted);">
+                Already registered?
+                <a href="{{ url_for('api.login') }}"
+                   style="color:var(--primary);font-weight:600;text-decoration:none;margin-left:4px;">
+                    Sign In
+                </a>
             </div>
-
-            <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-1.5">Password</label>
-                <input type="password" name="password" required placeholder="••••••••"
-                       class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all">
-            </div>
-
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-[11px] text-slate-400">
-                <i class="fas fa-info-circle text-cyan-400 mr-1"></i>
-                Accounts with username <strong class="text-slate-200">admin</strong> receive instant administrator approval.
-            </div>
-
-            <button type="submit" 
-                    class="w-full py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-600/20 transition-all flex items-center justify-center gap-2">
-                <span>Register Account</span>
-                <i class="fas fa-arrow-right text-[10px]"></i>
-            </button>
-        </form>
-
-        <div class="pt-4 border-t border-slate-800 text-center text-xs text-slate-400">
-            Already registered? 
-            <a href="{{ url_for('api.login') }}" class="text-cyan-400 hover:text-cyan-300 font-semibold ml-1">
-                Sign In
-            </a>
         </div>
 
     </div>

@@ -2,322 +2,280 @@
 {% block title %}Settings — InsightBot{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto py-2 space-y-8">
 
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-800">
-        <div>
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-2">
-                <i class="fas fa-sliders-h"></i> Configuration Panel
-            </div>
-            <h1 class="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight">
-                System & Account Settings
-            </h1>
-            <p class="text-xs sm:text-sm text-slate-400 mt-1">
-                Customize appearance, scheduling defaults, notify profiles, and view service operational health.
-            </p>
+<!-- HEADER -->
+<div class="page-header-row" style="margin-bottom:24px;">
+    <div>
+        <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--primary-light);border:1px solid var(--primary-mid);border-radius:99px;font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
+            <i class="fas fa-sliders-h"></i> Configuration Panel
         </div>
+        <h1 style="font-size:26px;font-weight:700;color:var(--text-primary);letter-spacing:-0.5px;">
+            System &amp; Account Settings
+        </h1>
+        <p style="font-size:13.5px;color:var(--text-secondary);margin-top:4px;">
+            Customize appearance, scheduling defaults, notification profiles, and view service operational health.
+        </p>
     </div>
-
-    <!-- Main Settings Form Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        <!-- Navigation Menu Inside Settings -->
-        <div class="space-y-2">
-            <button onclick="switchTab('appearance')" id="tabBtn-appearance" class="w-full text-left px-4 py-3 rounded-xl bg-slate-900 border border-cyan-500/20 text-cyan-400 text-xs font-bold transition-all flex items-center gap-2.5">
-                <i class="fas fa-palette"></i> Appearance & UI
-            </button>
-            <button onclick="switchTab('notifications')" id="tabBtn-notifications" class="w-full text-left px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 text-xs font-medium hover:text-white transition-all flex items-center gap-2.5">
-                <i class="fas fa-bell"></i> Notifications Config
-            </button>
-            <button onclick="switchTab('data')" id="tabBtn-data" class="w-full text-left px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 text-xs font-medium hover:text-white transition-all flex items-center gap-2.5">
-                <i class="fas fa-database"></i> Pipeline & Data Settings
-            </button>
-            <button onclick="switchTab('services')" id="tabBtn-services" class="w-full text-left px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 text-xs font-medium hover:text-white transition-all flex items-center gap-2.5">
-                <i class="fas fa-heartbeat"></i> Service Status Health
-            </button>
-        </div>
-
-        <!-- Settings Cards Contents (2 cols width) -->
-        <div class="md:col-span-2 space-y-6">
-            
-            <form method="POST" action="{{ url_for('api.settings') }}">
-                
-                <!-- Tab 1: Appearance -->
-                <div id="tab-appearance" class="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-6">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-palette text-cyan-400 text-lg"></i>
-                        <h3 class="text-base font-heading font-bold text-white">Appearance & UI</h3>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        <!-- Theme Toggle UI -->
-                        <div class="form-group">
-                            <label class="form-label text-xs">Visual Theme Theme</label>
-                            <div class="grid grid-cols-3 gap-3 mt-1.5">
-                                <button type="button" onclick="setThemePreference('dark')" class="p-4 rounded-xl bg-slate-950 border border-cyan-500/30 text-white text-xs font-bold transition-all text-center flex flex-col items-center gap-2">
-                                    <i class="fas fa-moon text-cyan-400 text-base"></i>
-                                    <span>Dark Theme</span>
-                                </button>
-                                <button type="button" onclick="setThemePreference('light')" class="p-4 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-400 text-xs font-medium transition-all text-center flex flex-col items-center gap-2">
-                                    <i class="fas fa-sun text-slate-500 text-base"></i>
-                                    <span>Light Theme</span>
-                                </button>
-                                <button type="button" onclick="setThemePreference('system')" class="p-4 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-400 text-xs font-medium transition-all text-center flex flex-col items-center gap-2">
-                                    <i class="fas fa-desktop text-slate-500 text-base"></i>
-                                    <span>System Default</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Language Preference -->
-                        <div class="form-group">
-                            <label for="prefLanguage" class="form-label text-xs">Preferred UI Language</label>
-                            <select id="prefLanguage" class="form-control text-xs bg-slate-950 border-slate-800 rounded-xl mt-1 text-slate-300">
-                                <option value="en">English (Default)</option>
-                                <option value="ar">العربية (Arabic - RTL)</option>
-                                <option value="ru">Русский (Russian - Cyrillic)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tab 2: Notifications -->
-                <div id="tab-notifications" class="hidden p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-6">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-bell text-cyan-400 text-lg"></i>
-                        <h3 class="text-base font-heading font-bold text-white">Notifications Config</h3>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-950/40 border border-slate-800/60">
-                            <input type="checkbox" checked id="notifyScrape" class="mt-1 rounded bg-slate-950 border-slate-700 text-cyan-500 focus:ring-cyan-500">
-                            <div>
-                                <label for="notifyScrape" class="text-xs font-bold text-white block">Scraping Run Success</label>
-                                <span class="text-[10px] text-slate-400 block mt-0.5">Notify when background periodic ingestion completes successfully.</span>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-950/40 border border-slate-800/60">
-                            <input type="checkbox" checked id="notifyError" class="mt-1 rounded bg-slate-950 border-slate-700 text-cyan-500 focus:ring-cyan-500">
-                            <div>
-                                <label for="notifyError" class="text-xs font-bold text-white block">Extraction Errors & Warnings</label>
-                                <span class="text-[10px] text-slate-400 block mt-0.5">Receive alert logs if structural patterns fail on target sites.</span>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-950/40 border border-slate-800/60">
-                            <input type="checkbox" id="notifyReports" class="mt-1 rounded bg-slate-950 border-slate-700 text-cyan-500 focus:ring-cyan-500">
-                            <div>
-                                <label for="notifyReports" class="text-xs font-bold text-white block">Daily Intelligence Reports</label>
-                                <span class="text-[10px] text-slate-400 block mt-0.5">Email compilation containing keywords and Tableau summaries.</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tab 3: Data -->
-                <div id="tab-data" class="hidden p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-6">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-database text-cyan-400 text-lg"></i>
-                        <h3 class="text-base font-heading font-bold text-white">Pipeline & Data Settings</h3>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        <div class="form-group">
-                            <label for="defaultRange" class="form-label text-xs">Default Analytics Date Range</label>
-                            <select id="defaultRange" class="form-control text-xs bg-slate-950 border-slate-800 rounded-xl mt-1 text-slate-300">
-                                <option value="today">Today</option>
-                                <option value="7d" selected>Last 7 Days</option>
-                                <option value="30d">Last 30 Days</option>
-                                <option value="custom">All Ingested Data</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="rateLimit" class="form-label text-xs">Request Rate Limit Politeness Delay</label>
-                            <select id="rateLimit" class="form-control text-xs bg-slate-950 border-slate-800 rounded-xl mt-1 text-slate-300">
-                                <option value="500">500 ms (Fast)</option>
-                                <option value="1500" selected>1500 ms (Polite & Safe)</option>
-                                <option value="3000">3000 ms (Cautious)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tab 4: Services Status -->
-                <div id="tab-services" class="hidden p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl space-y-6">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-heartbeat text-cyan-400 text-lg"></i>
-                        <h3 class="text-base font-heading font-bold text-white">Service Status Health</h3>
-                    </div>
-                    
-                    <div class="space-y-3.5">
-                        
-                        <!-- Backend API -->
-                        <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400 text-xs">
-                                    <i class="fas fa-server"></i>
-                                </div>
-                                <div>
-                                    <div class="text-xs font-bold text-white">Backend API Server</div>
-                                    <div class="text-[9px] text-slate-500">Flask Blueprint WSGI</div>
-                                </div>
-                            </div>
-                            <span class="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 flex items-center gap-1.5">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                                {{ services.api }}
-                            </span>
-                        </div>
-
-                        <!-- Database -->
-                        <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 text-xs">
-                                    <i class="fas fa-database"></i>
-                                </div>
-                                <div>
-                                    <div class="text-xs font-bold text-white">MongoDB Connection</div>
-                                    <div class="text-[9px] text-slate-500">localhost:27017/insightbot_db</div>
-                                </div>
-                            </div>
-                            {% if services.database == 'Online' %}
-                                <span class="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 flex items-center gap-1.5">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                                    {{ services.database }}
-                                </span>
-                            {% else %}
-                                <span class="px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-400 text-[10px] font-bold border border-rose-500/20 flex items-center gap-1.5">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
-                                    {{ services.database }}
-                                </span>
-                            {% endif %}
-                        </div>
-
-                        <!-- Scraper -->
-                        <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-xs">
-                                    <i class="fas fa-spider"></i>
-                                </div>
-                                <div>
-                                    <div class="text-xs font-bold text-white">Web Scraper & Crawler</div>
-                                    <div class="text-[9px] text-slate-500">BeautifulSoup / Requests</div>
-                                </div>
-                            </div>
-                            <span class="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 flex items-center gap-1.5">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                                {{ services.scraper }}
-                            </span>
-                        </div>
-
-                        <!-- Scheduler -->
-                        <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 text-xs">
-                                    <i class="fas fa-clock"></i>
-                                </div>
-                                <div>
-                                    <div class="text-xs font-bold text-white">Automation Scheduler</div>
-                                    <div class="text-[9px] text-slate-500">Daemon Execution Thread</div>
-                                </div>
-                            </div>
-                            <span class="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 flex items-center gap-1.5">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                                {{ services.scheduler }}
-                            </span>
-                        </div>
-
-                    </div>
-                </div>
-
-                <!-- Footer Save Button -->
-                <div class="mt-6 flex justify-end">
-                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs shadow-lg shadow-cyan-500/10 transition-all">
-                        Save System Settings
-                    </button>
-                </div>
-
-            </form>
-        </div>
-    </div>
-
 </div>
+
+<!-- MAIN SETTINGS GRID -->
+<div style="display:grid;grid-template-columns:200px 1fr;gap:18px;align-items:start;">
+
+    <!-- LEFT: Navigation Tabs -->
+    <div style="display:flex;flex-direction:column;gap:6px;">
+        <button onclick="switchTab('appearance')" id="tabBtn-appearance" class="btn btn-primary" style="width:100%;justify-content:flex-start;font-size:12.5px;">
+            <i class="fas fa-palette"></i> Appearance
+        </button>
+        <button onclick="switchTab('notifications')" id="tabBtn-notifications" class="btn btn-secondary" style="width:100%;justify-content:flex-start;font-size:12.5px;">
+            <i class="fas fa-bell"></i> Notifications
+        </button>
+        <button onclick="switchTab('data')" id="tabBtn-data" class="btn btn-secondary" style="width:100%;justify-content:flex-start;font-size:12.5px;">
+            <i class="fas fa-database"></i> Pipeline
+        </button>
+        <button onclick="switchTab('services')" id="tabBtn-services" class="btn btn-secondary" style="width:100%;justify-content:flex-start;font-size:12.5px;">
+            <i class="fas fa-heartbeat"></i> Services
+        </button>
+    </div>
+
+    <!-- RIGHT: Tab Content -->
+    <div>
+        <form method="POST" action="{{ url_for('api.settings') }}">
+
+            <!-- TAB 1: Appearance -->
+            <div id="tab-appearance" class="card" style="padding:24px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+                    <div style="width:36px;height:36px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:16px;">
+                        <i class="fas fa-palette"></i>
+                    </div>
+                    <h3 style="font-size:13px;font-weight:700;color:var(--text-primary);text-transform:uppercase;letter-spacing:0.5px;">Appearance &amp; UI</h3>
+                </div>
+
+                <!-- Theme Toggle -->
+                <div style="margin-bottom:20px;">
+                    <label class="form-label">Visual Theme</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px;">
+                        <button type="button" onclick="setThemePreference('dark')" id="theme-dark" class="settings-theme-btn">
+                            <i class="fas fa-moon"></i>
+                            <span>Dark Theme</span>
+                        </button>
+                        <button type="button" onclick="setThemePreference('light')" id="theme-light" class="settings-theme-btn">
+                            <i class="fas fa-sun"></i>
+                            <span>Light Theme</span>
+                        </button>
+                        <button type="button" onclick="setThemePreference('system')" id="theme-system" class="settings-theme-btn">
+                            <i class="fas fa-desktop"></i>
+                            <span>System Default</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Language -->
+                <div>
+                    <label for="prefLanguage" class="form-label">Preferred UI Language</label>
+                    <select id="prefLanguage" name="language" class="form-input">
+                        <option value="en">English (Default)</option>
+                        <option value="ar">العربية (Arabic - RTL)</option>
+                        <option value="ru">Русский (Russian - Cyrillic)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- TAB 2: Notifications -->
+            <div id="tab-notifications" class="hidden card" style="padding:24px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+                    <div style="width:36px;height:36px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:16px;">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <h3 style="font-size:13px;font-weight:700;color:var(--text-primary);text-transform:uppercase;letter-spacing:0.5px;">Notifications Config</h3>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:12px;">
+                    <label style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:var(--gray-50);border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+                        <input type="checkbox" name="notify_scrape" checked style="margin-top:3px;color:var(--primary);accent-color:var(--primary);">
+                        <div>
+                            <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Scraping Run Success</div>
+                            <span style="font-size:12.5px;color:var(--text-muted);display:block;margin-top:2px;">Notify when background periodic ingestion completes successfully.</span>
+                        </div>
+                    </label>
+
+                    <label style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:var(--gray-50);border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+                        <input type="checkbox" name="notify_error" checked style="margin-top:3px;color:var(--primary);accent-color:var(--primary);">
+                        <div>
+                            <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Extraction Errors &amp; Warnings</div>
+                            <span style="font-size:12.5px;color:var(--text-muted);display:block;margin-top:2px;">Receive alert logs if structural patterns fail on target sites.</span>
+                        </div>
+                    </label>
+
+                    <label style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:var(--gray-50);border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+                        <input type="checkbox" name="notify_reports" style="margin-top:3px;color:var(--primary);accent-color:var(--primary);">
+                        <div>
+                            <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Daily Intelligence Reports</div>
+                            <span style="font-size:12.5px;color:var(--text-muted);display:block;margin-top:2px;">Email compilation containing keywords and Tableau summaries.</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- TAB 3: Data Pipeline -->
+            <div id="tab-data" class="hidden card" style="padding:24px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+                    <div style="width:36px;height:36px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:16px;">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <h3 style="font-size:13px;font-weight:700;color:var(--text-primary);text-transform:uppercase;letter-spacing:0.5px;">Pipeline &amp; Data Settings</h3>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <div>
+                        <label for="defaultRange" class="form-label">Default Analytics Date Range</label>
+                        <select id="defaultRange" name="date_range" class="form-input">
+                            <option value="today">Today</option>
+                            <option value="7d" selected>Last 7 Days</option>
+                            <option value="30d">Last 30 Days</option>
+                            <option value="custom">All Ingested Data</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="rateLimit" class="form-label">Request Rate Limit Politeness Delay</label>
+                        <select id="rateLimit" name="rate_limit" class="form-input">
+                            <option value="500">500 ms (Fast)</option>
+                            <option value="1500" selected>1500 ms (Polite &amp; Safe)</option>
+                            <option value="3000">3000 ms (Cautious)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: Services Status -->
+            <div id="tab-services" class="hidden card" style="padding:24px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+                    <div style="width:36px;height:36px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:16px;">
+                        <i class="fas fa-heartbeat"></i>
+                    </div>
+                    <h3 style="font-size:13px;font-weight:700;color:var(--text-primary);text-transform:uppercase;letter-spacing:0.5px;">Service Status Health</h3>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    <!-- Backend API -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--gray-50);border:1px solid var(--border);border-radius:8px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="width:32px;height:32px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:13px;">
+                                <i class="fas fa-server"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Backend API Server</div>
+                                <div style="font-size:11.5px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Flask Blueprint WSGI</div>
+                            </div>
+                        </div>
+                        <span class="badge badge-green"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent-green);display:inline-block;margin-right:4px;"></span>{{ services.api }}</span>
+                    </div>
+
+                    <!-- Database -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--gray-50);border:1px solid var(--border);border-radius:8px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="width:32px;height:32px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:13px;">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:13px;font-weight:700;color:var(--text-primary);">MongoDB Connection</div>
+                                <div style="font-size:11.5px;color:var(--text-muted);font-weight:600;font-family:monospace;">MongoDB Atlas</div>
+                            </div>
+                        </div>
+                        {% if services.database == 'Online' %}
+                            <span class="badge badge-green"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent-green);display:inline-block;margin-right:4px;"></span>{{ services.database }}</span>
+                        {% else %}
+                            <span class="badge badge-red"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent-red);display:inline-block;margin-right:4px;"></span>{{ services.database }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Scraper -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--gray-50);border:1px solid var(--border);border-radius:8px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="width:32px;height:32px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:13px;">
+                                <i class="fas fa-spider"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Web Scraper &amp; Crawler</div>
+                                <div style="font-size:11.5px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">BeautifulSoup / Requests</div>
+                            </div>
+                        </div>
+                        <span class="badge badge-green">{{ services.scraper }}</span>
+                    </div>
+
+                    <!-- Scheduler -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--gray-50);border:1px solid var(--border);border-radius:8px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="width:32px;height:32px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:13px;">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Automation Scheduler</div>
+                                <div style="font-size:11.5px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Daemon execution thread</div>
+                            </div>
+                        </div>
+                        <span class="badge badge-green"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent-green);display:inline-block;margin-right:4px;"></span>{{ services.scheduler }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div style="margin-top:18px;display:flex;justify-content:flex-end;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save" style="font-size:11px;"></i>
+                    Save System Settings
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<style>
+.settings-theme-btn {
+    display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px;border-radius:8px;border:1px solid var(--border);
+    background:var(--gray-50);color:var(--text-muted);font-size:12.5px;font-weight:600;cursor:pointer;transition:all 0.2s;
+}
+.settings-theme-btn:hover { border-color:var(--primary-mid);color:var(--primary); }
+.settings-theme-btn.active { border-color:var(--primary);background:var(--primary-light);color:var(--primary);font-weight:700; }
+.settings-theme-btn i { font-size:16px; }
+</style>
 
 <script>
 function switchTab(tabId) {
-    // Hide all tabs
-    document.getElementById('tab-appearance').classList.add('hidden');
-    document.getElementById('tab-notifications').classList.add('hidden');
-    document.getElementById('tab-data').classList.add('hidden');
-    document.getElementById('tab-services').classList.add('hidden');
-    
-    // Show active tab
-    document.getElementById('tab-' + tabId).classList.remove('hidden');
-    
-    // Reset button states
-    ['appearance', 'notifications', 'data', 'services'].forEach(t => {
+    ['appearance','notifications','data','services'].forEach(t => {
+        document.getElementById('tab-' + t).classList.add('hidden');
         const btn = document.getElementById('tabBtn-' + t);
-        btn.className = "w-full text-left px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 text-xs font-medium hover:text-white transition-all flex items-center gap-2.5";
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-secondary');
     });
-    
-    // Highlight active button
-    document.getElementById('tabBtn-' + tabId).className = "w-full text-left px-4 py-3 rounded-xl bg-slate-900 border border-cyan-500/20 text-cyan-400 text-xs font-bold transition-all flex items-center gap-2.5";
+    document.getElementById('tab-' + tabId).classList.remove('hidden');
+    const activeBtn = document.getElementById('tabBtn-' + tabId);
+    activeBtn.classList.remove('btn-secondary');
+    activeBtn.classList.add('btn-primary');
 }
 
 function setThemePreference(theme) {
-    if (typeof setTheme === 'function') {
-        setTheme(theme);
-    } else {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-        let activeTheme = theme;
-        if (theme === 'system') {
-            activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        }
-        if (activeTheme === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('insightbot-theme', theme);
+    let activeTheme = theme;
+    if (theme === 'system') {
+        activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
-    
-    updateSettingsActiveThemeButtons(theme);
-    
-    // Show toast message
-    if (typeof showToast === 'function') {
-        showToast(`Theme switched to ${theme.toUpperCase()}`, 'success');
-    }
+    document.documentElement.classList.toggle('dark', activeTheme === 'dark');
+    updateThemeButtons(theme);
+    if (typeof showToast === 'function') showToast('Theme switched to ' + theme.toUpperCase(), 'success');
 }
 
-function updateSettingsActiveThemeButtons(theme) {
-    const themes = ['dark', 'light', 'system'];
-    themes.forEach(t => {
-        const btn = document.querySelector(`button[onclick="setThemePreference('${t}')"]`);
-        if (btn) {
-            if (t === theme) {
-                btn.className = "p-4 rounded-xl bg-slate-950 border border-cyan-500/30 text-white text-xs font-bold transition-all text-center flex flex-col items-center gap-2";
-                const icon = btn.querySelector('i');
-                if (icon) {
-                    icon.classList.remove('text-slate-500');
-                    icon.classList.add('text-cyan-400');
-                }
-            } else {
-                btn.className = "p-4 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-400 text-xs font-medium transition-all text-center flex flex-col items-center gap-2";
-                const icon = btn.querySelector('i');
-                if (icon) {
-                    icon.classList.remove('text-cyan-400');
-                    icon.classList.add('text-slate-500');
-                }
-            }
-        }
+function updateThemeButtons(theme) {
+    ['dark','light','system'].forEach(t => {
+        const btn = document.getElementById('theme-' + t);
+        if (btn) btn.classList.toggle('active', t === theme);
     });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const currentTheme = localStorage.getItem('theme') || 'dark';
-    updateSettingsActiveThemeButtons(currentTheme);
+    updateThemeButtons(localStorage.getItem('insightbot-theme') || 'dark');
 });
 </script>
 {% endblock %}
