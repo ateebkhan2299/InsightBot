@@ -14,9 +14,9 @@
     <!-- FontAwesome 6 — reliable CDN -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
 
-    <!-- Core Stylesheets -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Core Stylesheets — v=3 forces cache refresh -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}?v=3">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=3">
 
     <!-- Inline CSS variables as fallback — ensures layout works even if variables.css CDN is slow -->
     <style>
