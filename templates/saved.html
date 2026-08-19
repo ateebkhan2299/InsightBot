@@ -1,0 +1,148 @@
+﻿{% extends "base.html" %}
+{% block title %}Saved Articles — InsightBot{% endblock %}
+
+{% block content %}
+
+<!-- ── PAGE HEADER ───────────────────────────────────────────── -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+    <div>
+        <h1 style="font-size:22px;font-weight:800;color:var(--text-primary);margin:0;display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;border-radius:10px;background:#FFF0F6;color:#C2185B;display:flex;align-items:center;justify-content:center;font-size:16px;">
+                <i class="fas fa-bookmark"></i>
+            </div>
+            Saved Articles
+        </h1>
+        <p style="margin:4px 0 0 46px;font-size:13px;color:var(--text-muted);">
+            Your personal reading list &mdash;
+            <strong style="color:var(--text-primary);">{{ articles|length }}</strong>
+            {% if articles|length == 1 %}article{% else %}articles{% endif %} saved
+        </p>
+    </div>
+    <a href="{{ url_for('api.news_explorer') }}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-rss" style="font-size:11px;"></i>
+        Browse News Feed
+    </a>
+</div>
+
+{% if articles %}
+
+<!-- ── SAVED ARTICLES GRID ───────────────────────────────────── -->
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px;">
+    {% for article in articles %}
+    <div class="card" style="padding:0;overflow:hidden;display:flex;flex-direction:column;" id="saved-card-{{ loop.index }}">
+
+        <!-- Card Top Bar (language badge + saved date) -->
+        <div style="padding:14px 18px 12px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;">
+            {% if article.language == 'Arabic' %}
+                <span class="badge badge-green">&#127462;&#127480; Arabic</span>
+            {% elif article.language == 'Russian' %}
+                <span class="badge badge-primary">&#127479;&#127482; Russian</span>
+            {% else %}
+                <span class="badge badge-blue">&#127468;&#127463; English</span>
+            {% endif %}
+            <span style="font-size:11px;color:var(--text-muted);">
+                <i class="fas fa-bookmark" style="color:#C2185B;margin-right:4px;font-size:10px;"></i>
+                Saved
+            </span>
+        </div>
+
+        <!-- Card Body -->
+        <div style="padding:16px 18px;flex:1;display:flex;flex-direction:column;gap:10px;">
+            <!-- Title -->
+            <a href="{{ url_for('api.article_detail', title=article.title) }}"
+               style="text-decoration:none;color:inherit;">
+                <h3 style="font-size:14px;font-weight:700;color:var(--text-primary);line-height:1.45;margin:0;
+                            display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">
+                    {{ article.title }}
+                </h3>
+            </a>
+
+            <!-- Snippet -->
+            <p style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;margin:0;
+                       display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">
+                {{ article.body[:200] }}...
+            </p>
+
+            <!-- Meta row -->
+            <div style="display:flex;align-items:center;gap:12px;font-size:11.5px;color:var(--text-muted);margin-top:auto;">
+                <span><i class="far fa-clock" style="margin-right:3px;"></i>{{ article.body|reading_time }} min read</span>
+                {% if article.source_url %}
+                <span><i class="fas fa-link" style="margin-right:3px;font-size:10px;"></i>{{ article.source_url|domain_name }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Card Footer Actions -->
+        <div style="padding:12px 18px;border-top:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <a href="{{ url_for('api.article_detail', title=article.title) }}"
+               class="btn btn-primary btn-sm" style="flex:1;text-align:center;">
+                <i class="fas fa-book-open" style="font-size:11px;"></i>
+                Read
+            </a>
+            <button onclick="unsaveArticle('{{ article.title }}', {{ loop.index }})"
+                    class="btn btn-sm"
+                    title="Remove bookmark"
+                    style="background:#FFF0F6;border:1px solid #F0D6E4;color:#C2185B;min-width:36px;display:flex;align-items:center;justify-content:center;">
+                <i class="fas fa-bookmark" style="font-size:12px;"></i>
+            </button>
+        </div>
+
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+
+<!-- ── EMPTY STATE ───────────────────────────────────────────── -->
+<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+            padding:80px 24px;text-align:center;">
+    <div style="width:72px;height:72px;border-radius:20px;background:#FFF0F6;
+                display:flex;align-items:center;justify-content:center;
+                font-size:30px;color:#C2185B;margin-bottom:20px;">
+        <i class="far fa-bookmark"></i>
+    </div>
+    <h2 style="font-size:20px;font-weight:700;color:var(--text-primary);margin:0 0 8px;">
+        No saved articles yet
+    </h2>
+    <p style="font-size:14px;color:var(--text-muted);max-width:380px;margin:0 0 24px;line-height:1.6;">
+        Open any article and click the <strong>Save</strong> button to bookmark it here for easy access later.
+    </p>
+    <a href="{{ url_for('api.news_explorer') }}" class="btn btn-primary">
+        <i class="fas fa-rss" style="font-size:12px;"></i>
+        Explore News Feed
+    </a>
+</div>
+
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function unsaveArticle(title, cardIndex) {
+    const card = document.getElementById('saved-card-' + cardIndex);
+    if (!card) return;
+
+    try {
+        const res = await fetch('/api/articles/unsave', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            card.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.95)';
+            setTimeout(() => card.remove(), 280);
+            if (typeof showToast === 'function') showToast('Removed from saved articles', 'info');
+        } else {
+            if (typeof showToast === 'function') showToast(data.error || 'Failed to remove', 'error');
+        }
+    } catch (err) {
+        if (typeof showToast === 'function') showToast('Network error. Please try again.', 'error');
+    }
+}
+</script>
+{% endblock %}

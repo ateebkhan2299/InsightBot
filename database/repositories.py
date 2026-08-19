@@ -521,3 +521,96 @@ article_repository = ArticleRepository()
 source_repository = SourceRepository()
 log_repository = LogRepository()
 scrape_job_repository = ScrapeJobRepository()
+
+
+# ==============================================================================
+# SAVED ARTICLES REPOSITORY
+# Stores user bookmarks in MongoDB collection 'saved_articles'
+# ==============================================================================
+
+class SavedArticleRepository:
+    def __init__(self):
+        self.collection_name = 'saved_articles'
+        try:
+            coll = self.collection
+            if coll is not None:
+                coll.create_index([("user_id", 1), ("article_title", 1)], unique=True)
+        except Exception:
+            pass
+
+    @property
+    def collection(self):
+        return db_connection.get_collection(self.collection_name)
+
+    def save_article(self, user_id: str, article_title: str) -> bool:
+        """Bookmark an article for a user. Returns True on success."""
+        coll = self.collection
+        if coll is None:
+            return False
+        try:
+            import datetime
+            coll.update_one(
+                {"user_id": user_id, "article_title": article_title},
+                {"$set": {
+                    "user_id": user_id,
+                    "article_title": article_title,
+                    "saved_at": datetime.datetime.utcnow().isoformat()
+                }},
+                upsert=True
+            )
+            return True
+        except Exception as e:
+            logger.error(f"SavedArticleRepository.save_article error: {e}")
+            return False
+
+    def unsave_article(self, user_id: str, article_title: str) -> bool:
+        """Remove a bookmark for a user. Returns True on success."""
+        coll = self.collection
+        if coll is None:
+            return False
+        try:
+            result = coll.delete_one({"user_id": user_id, "article_title": article_title})
+            return result.deleted_count > 0
+        except Exception as e:
+            logger.error(f"SavedArticleRepository.unsave_article error: {e}")
+            return False
+
+    def is_saved(self, user_id: str, article_title: str) -> bool:
+        """Check if an article is already bookmarked by the user."""
+        coll = self.collection
+        if coll is None:
+            return False
+        try:
+            return coll.find_one({"user_id": user_id, "article_title": article_title}) is not None
+        except Exception:
+            return False
+
+    def get_saved_articles(self, user_id: str) -> List[Dict[str, Any]]:
+        """
+        Fetch all articles saved by a user, with full article data joined.
+        Returns list of article dicts (same shape as article_repository.get_all).
+        """
+        coll = self.collection
+        if coll is None:
+            return []
+        try:
+            saved_docs = list(coll.find({"user_id": user_id}).sort("saved_at", -1))
+            articles = []
+            art_coll = db_connection.get_collection('articles')
+            for doc in saved_docs:
+                title = doc.get("article_title", "")
+                if art_coll is not None:
+                    article = art_coll.find_one(
+                        {"title": {"$regex": f"^{re.escape(title)}$", "$options": "i"}},
+                        {"_id": 0}
+                    )
+                    if article:
+                        article["saved_at"] = doc.get("saved_at", "")
+                        articles.append(article)
+            return articles
+        except Exception as e:
+            logger.error(f"SavedArticleRepository.get_saved_articles error: {e}")
+            return []
+
+
+saved_article_repository = SavedArticleRepository()

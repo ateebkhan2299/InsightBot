@@ -1,16 +1,17 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, send_file
-from database.repositories import article_repository, source_repository, log_repository, scrape_job_repository
+from database.repositories import article_repository, source_repository, log_repository, scrape_job_repository, saved_article_repository
 from database.mongodb import db_connection
 from auth.authentication import AuthManager
 from bson.objectid import ObjectId
 from scraper.scraper import Scraper
 from scraper.extractor import ArticleExtractor
-from scraper.pattern_mining import PatternMiner
 from scraper.export_csv import export_for_tableau
 import os
 import json
 import re
 import logging
+from collections import Counter
+from urllib.parse import urlparse
 from config.config import config
 
 logger = logging.getLogger(__name__)
@@ -32,8 +33,9 @@ def enforce_route_authorization():
         flash("Please sign in to access this page.", "warning")
         return redirect(url_for('api.login'))
         
-    # Check admin privileges for admin routes
-    if endpoint in ['api.admin_dashboard', 'api.approve_user']:
+    # Check admin privileges for admin-only routes
+    admin_endpoints = ['api.admin_dashboard', 'api.approve_user']
+    if endpoint in admin_endpoints:
         if not session.get('is_admin'):
             if request.path.startswith('/api/'):
                 return jsonify({"success": False, "error": "Administrator privilege required"}), 403
@@ -90,6 +92,7 @@ def news_explorer():
         articles_list = [a for a in articles_list if selected_domain in a.get('source_url', '')]
     
     stats = article_repository.get_statistics()
+    training_sources = source_repository.get_all_sources()
     
     return render_template(
         'explorer.html',
@@ -100,6 +103,7 @@ def news_explorer():
         sort_by=sort_by,
         view_mode=view_mode,
         stats=stats,
+        training_sources=training_sources,
         current_page='explorer'
     )
 
@@ -135,6 +139,12 @@ def article_detail(title):
     # Filter out current article
     related_articles = [a for a in related_articles if a.get('title') != article.get('title')][:3]
     
+    # Check if current user has saved this article
+    user_id = session.get('user_id')
+    is_saved = False
+    if user_id:
+        is_saved = saved_article_repository.is_saved(user_id, article.get('title', ''))
+
     return render_template(
         'article_detail.html',
         article=article,
@@ -142,6 +152,7 @@ def article_detail(title):
         char_count=char_count,
         paragraph_count=paragraph_count,
         related_articles=related_articles,
+        is_saved=is_saved,
         current_page='explorer'
     )
 
@@ -354,7 +365,7 @@ def get_language_statistics():
     if coll is None:
         return {}
     
-    docs = list(coll.find({}, {"_id": 0, "title": 1, "body": 1, "language": 1, "source_url": 1}))
+    docs = list(coll.find({}, {"_id": 0, "title": 1, "body": 1, "language": 1, "source_url": 1}).limit(250))
     total = len(docs)
     
     stats = {
@@ -367,9 +378,6 @@ def get_language_statistics():
         'the', 'and', 'for', 'that', 'this', 'with', 'from', 'have', 'more', 'will',
         'news', 'live', 'said', 'they', 'were', 'been', 'their', 'about', 'after'
     }
-    
-    from collections import Counter
-    from urllib.parse import urlparse
     
     lang_words = {
         "English": Counter(),
@@ -484,21 +492,70 @@ def settings():
 @api_bp.route('/profile', methods=['GET', 'POST'])
 def profile():
     if request.method == 'POST':
+        user_id = session.get('user_id')
+        if not user_id:
+            flash("Session expired. Please sign in again.", "warning")
+            return redirect(url_for('api.login'))
+
+        fullname = request.form.get('fullname', '').strip()
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+
+        if not fullname or not email:
+            flash("Full name and email are required.", "danger")
+            return redirect(url_for('api.profile'))
+
+        users = db_connection.get_collection('users')
+        if users is None:
+            flash("Database connection unavailable.", "danger")
+            return redirect(url_for('api.profile'))
+
+        update_fields = {'fullname': fullname, 'email': email}
+
+        if password:
+            if password != confirm_password:
+                flash("Passwords do not match.", "danger")
+                return redirect(url_for('api.profile'))
+            if len(password) < 6:
+                flash("Password must be at least 6 characters.", "danger")
+                return redirect(url_for('api.profile'))
+            pwd_hash, salt = AuthManager.hash_password(password)
+            update_fields['password_hash'] = pwd_hash
+            update_fields['salt'] = salt
+
+        users.update_one(
+            {'_id': ObjectId(user_id)},
+            {'$set': update_fields}
+        )
+        session['username'] = fullname.split()[0].lower() if fullname else session.get('username')
         flash("Profile updated successfully.", "success")
         return redirect(url_for('api.profile'))
-        
+
     stats = article_repository.get_statistics()
-    
+
+    user_id = session.get('user_id')
+    user_data = {}
+    if user_id:
+        users = db_connection.get_collection('users')
+        if users is not None:
+            user_data = users.find_one({'_id': ObjectId(user_id)}) or {}
+
+    from datetime import datetime
+    created = user_data.get('created_at', '')
+    if hasattr(created, 'strftime'):
+        created = created.strftime('%Y-%m-%d')
+    elif not created:
+        created = '2026-08-15'
+
     user_info = {
-        "fullname": session.get("username", "Guest Analyst").capitalize(),
-        "email": f"{session.get('username', 'guest')}@insightbot.ai",
+        "fullname": user_data.get('fullname', session.get("username", "Guest").capitalize()),
+        "email": user_data.get('email', f"{session.get('username', 'guest')}@insightbot.ai"),
         "role": "Administrator" if session.get("is_admin") else "Analyst",
-        "language": "English",
-        "api_key": "ib_live_8f3d64b2ac91e70c5e4d2a1f098b",
-        "mongodb_uri": "mongodb://localhost:27017/insightbot_db",
-        "tableau_url": "https://public.tableau.com/views/RegionalSampleWorkbook"
+        "language": user_data.get('language', 'English'),
+        "registered_date": created
     }
-    
+
     return render_template(
         'profile.html',
         stats=stats,
@@ -698,6 +755,11 @@ def api_upload_file():
                     success = article_repository.save_to_db(art)
                     if success:
                         saved_count += 1
+            if saved_count > 0:
+                try:
+                    export_for_tableau()
+                except Exception:
+                    pass
             return jsonify({"success": True, "message": f"Successfully ingested {saved_count} articles from JSON"}), 200
             
         # 3. CSV Ingestion
@@ -717,8 +779,11 @@ def api_upload_file():
                         "source_url": row.get("source_url", "")
                     }
                     success = article_repository.save_to_db(art)
-                    if success:
-                        saved_count += 1
+            if saved_count > 0:
+                try:
+                    export_for_tableau()
+                except Exception:
+                    pass
             return jsonify({"success": True, "message": f"Successfully ingested {saved_count} articles from CSV"}), 200
             
         else:
@@ -806,7 +871,6 @@ def register():
             
         users = db_connection.get_collection('users')
         if users is not None:
-            import re
             if users.find_one({'username': re.compile(f'^{re.escape(username)}$', re.I)}):
                 flash('Username already taken. Please choose another.', 'danger')
             else:
@@ -837,7 +901,68 @@ def logout():
     """User Logout route."""
     session.clear()
     flash('You have been signed out successfully.', 'info')
-    return redirect(url_for('api.dashboard'))
+    return redirect(url_for('api.login'))
+
+
+# ==============================================================================
+# 12. SAVED ARTICLES (BOOKMARKS)
+# ==============================================================================
+
+@api_bp.route('/api/articles/save', methods=['POST'])
+def api_save_article():
+    """Bookmark an article for the logged-in user."""
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"success": False, "error": "Authentication required"}), 401
+
+    data = request.get_json(silent=True) or {}
+    title = data.get('title', '').strip()
+    if not title:
+        return jsonify({"success": False, "error": "Article title is required"}), 400
+
+    success = saved_article_repository.save_article(user_id, title)
+    if success:
+        return jsonify({"success": True, "message": "Article saved to your bookmarks"}), 200
+    return jsonify({"success": False, "error": "Failed to save article"}), 500
+
+
+@api_bp.route('/api/articles/unsave', methods=['POST'])
+def api_unsave_article():
+    """Remove an article bookmark for the logged-in user."""
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"success": False, "error": "Authentication required"}), 401
+
+    data = request.get_json(silent=True) or {}
+    title = data.get('title', '').strip()
+    if not title:
+        return jsonify({"success": False, "error": "Article title is required"}), 400
+
+    success = saved_article_repository.unsave_article(user_id, title)
+    if success:
+        return jsonify({"success": True, "message": "Article removed from bookmarks"}), 200
+    # unsave may return False if it wasn't saved — treat as success
+    return jsonify({"success": True, "message": "Article was not in bookmarks"}), 200
+
+
+@api_bp.route('/saved')
+def saved_articles():
+    """Saved (Bookmarked) Articles page for the logged-in user."""
+    user_id = session.get('user_id')
+    if not user_id:
+        flash("Please sign in to view your saved articles.", "warning")
+        return redirect(url_for('api.login'))
+
+    articles = saved_article_repository.get_saved_articles(user_id)
+    stats = article_repository.get_statistics()
+
+    return render_template(
+        'saved.html',
+        articles=articles,
+        stats=stats,
+        current_page='saved'
+    )
+
 
 
 @api_bp.route('/admin')
