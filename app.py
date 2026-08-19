@@ -6,6 +6,7 @@ import sys
 import secrets
 import logging
 from flask import Flask, render_template
+from whitenoise import WhiteNoise
 from config.config import config
 from database.mongodb import db_connection
 from api.routes import api_bp
@@ -109,6 +110,11 @@ def create_app():
     return app
 
 app = create_app()
+
+# Wrap with WhiteNoise to serve static files reliably on Vercel
+# This eliminates the need for @vercel/static builder configuration
+static_dir = os.path.join(os.path.dirname(__file__), 'static')
+app.wsgi_app = WhiteNoise(app.wsgi_app, root=static_dir, prefix='static', autorefresh=True)
 
 if __name__ == '__main__':
     print("InsightBot running on http://127.0.0.1:5000")

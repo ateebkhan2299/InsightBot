@@ -4,33 +4,9 @@
     {
       "src": "app.py",
       "use": "@vercel/python"
-    },
-    {
-      "src": "static/**",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
-    {
-      "src": "/static/css/(.*)",
-      "dest": "/static/css/$1",
-      "headers": {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Pragma": "no-cache"
-      }
-    },
-    {
-      "src": "/static/js/(.*)",
-      "dest": "/static/js/$1",
-      "headers": {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Pragma": "no-cache"
-      }
-    },
-    {
-      "src": "/static/(.*)",
-      "dest": "/static/$1"
-    },
     {
       "src": "/(.*)",
       "dest": "app.py"

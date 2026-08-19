@@ -7,3 +7,4 @@ python-dotenv==1.0.0
 schedule==1.2.1
 Werkzeug==3.0.1
 dnspython>=2.0.0
+whitenoise==6.6.0
