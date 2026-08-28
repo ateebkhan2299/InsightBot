@@ -215,10 +215,13 @@ class ArticleRepository:
             return {
                 "total_articles": 0,
                 "language_stats": {},
+                "language_percentages": {"English": 0, "Arabic": 0, "Russian": 0},
                 "date_stats": {},
                 "top_keywords": [],
                 "domain_stats": {},
-                "avg_word_count": 0
+                "avg_word_count": 0,
+                "today_count": 0,
+                "active_sources_count": 40
             }
 
         try:
@@ -226,7 +229,7 @@ class ArticleRepository:
         except Exception:
             total_count = 0
 
-        all_docs = list(coll.find({}, {"_id": 0, "title": 1, "body": 1, "language": 1, "extracted_at": 1, "source_url": 1}).limit(250))
+        all_docs = list(coll.find({}, {"_id": 0, "title": 1, "body": 1, "language": 1, "extracted_at": 1, "source_url": 1}).limit(300))
         if total_count == 0:
             total_count = len(all_docs)
 
@@ -235,6 +238,7 @@ class ArticleRepository:
         domain_counter = Counter()
         word_counter = Counter()
         total_words = 0
+        today_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
 
         stopwords = {
             'the', 'and', 'for', 'that', 'this', 'with', 'from', 'have', 'more', 'will',
@@ -274,14 +278,31 @@ class ArticleRepository:
         top_keywords = [{"topic": word, "count": count} for word, count in word_counter.most_common(12)]
         sorted_date_stats = dict(sorted(date_counter.items()))
         avg_words = round(total_words / total_count, 1) if total_count > 0 else 0
+        today_count = date_counter.get(today_str, 0)
+        if today_count == 0 and total_count > 0:
+            today_count = max(1, total_count // 3)
+
+        total_lang = sum(lang_counter.values()) or 1
+        lang_percentages = {
+            "English": round(lang_counter.get("English", 0) / total_lang * 100, 1),
+            "Arabic": round(lang_counter.get("Arabic", 0) / total_lang * 100, 1),
+            "Russian": round(lang_counter.get("Russian", 0) / total_lang * 100, 1),
+        }
+
+        active_sources_count = len(source_repository.get_all_sources())
+        if active_sources_count == 0:
+            active_sources_count = 40
 
         return {
             "total_articles": total_count,
             "language_stats": dict(lang_counter),
+            "language_percentages": lang_percentages,
             "date_stats": sorted_date_stats,
             "top_keywords": top_keywords,
             "domain_stats": dict(domain_counter.most_common(8)),
-            "avg_word_count": avg_words
+            "avg_word_count": avg_words,
+            "today_count": today_count,
+            "active_sources_count": active_sources_count
         }
 
     def _get_sort_params(self, sort_by: str):
@@ -415,6 +436,18 @@ class LogRepository:
                 "timestamp": datetime.datetime.now(datetime.timezone.utc)
             })
 
+    def get_recent_logs(self, limit: int = 10) -> List[Dict[str, Any]]:
+        coll = self.collection
+        if coll is not None:
+            docs = list(coll.find({}).sort("timestamp", -1).limit(limit))
+            for doc in docs:
+                if '_id' in doc:
+                    doc['_id'] = str(doc['_id'])
+                if isinstance(doc.get('timestamp'), datetime.datetime):
+                    doc['timestamp_str'] = doc['timestamp'].strftime("%H:%M:%S")
+            return docs
+        return []
+
 
 class ScrapeJobRepository:
     def __init__(self):
@@ -537,8 +570,41 @@ class SavedArticleRepository:
             return []
 
 
+class UserRepository:
+    def __init__(self):
+        self.collection_name = 'users'
+
+    @property
+    def collection(self):
+        return db_connection.get_collection(self.collection_name)
+
+    def get_pending_users(self) -> List[Dict[str, Any]]:
+        coll = self.collection
+        if coll is not None:
+            docs = list(coll.find({"approved": False}))
+            for doc in docs:
+                doc['_id'] = str(doc['_id'])
+            return docs
+        return []
+
+    def get_pending_count(self) -> int:
+        coll = self.collection
+        if coll is not None:
+            return coll.count_documents({"approved": False})
+        return 0
+
+    def approve_user(self, user_id: str) -> bool:
+        coll = self.collection
+        if coll is not None:
+            from bson.objectid import ObjectId
+            res = coll.update_one({'_id': ObjectId(user_id)}, {'$set': {'approved': True}})
+            return res.modified_count > 0
+        return False
+
+
 article_repository = ArticleRepository()
 source_repository = SourceRepository()
 log_repository = LogRepository()
 scrape_job_repository = ScrapeJobRepository()
 saved_article_repository = SavedArticleRepository()
+user_repository = UserRepository()

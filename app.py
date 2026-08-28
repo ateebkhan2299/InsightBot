@@ -3,7 +3,7 @@ import sys
 import secrets
 import logging
 from urllib.parse import urlparse
-from flask import Flask, render_template
+from flask import Flask, render_template, session, request
 
 try:
     from whitenoise import WhiteNoise
@@ -12,6 +12,7 @@ except ImportError:
 
 from config.config import config
 from database.mongodb import db_connection
+from database.repositories import user_repository
 from api.routes import api_bp
 
 logging.basicConfig(
@@ -38,6 +39,21 @@ def create_app():
                 bot_scheduler.start()
             except Exception as exc:
                 logger.error(f"Failed to start scheduler: {exc}")
+
+    @app.context_processor
+    def inject_global_data():
+        pending_count = 0
+        pending_users = []
+        if session.get('is_admin'):
+            pending_users = user_repository.get_pending_users()
+            pending_count = len(pending_users)
+
+        active_lang = request.args.get('lang', '') or session.get('active_lang', '')
+        return {
+            'pending_users_count': pending_count,
+            'pending_users_list': pending_users,
+            'current_lang': active_lang
+        }
 
     @app.template_filter('snippet')
     def snippet_filter(text, length=180):

@@ -17,6 +17,7 @@ from database.repositories import (
     log_repository,
     scrape_job_repository,
     saved_article_repository,
+    user_repository,
 )
 from database.mongodb import db_connection
 from auth.authentication import AuthManager
@@ -43,7 +44,7 @@ def enforce_route_authorization():
         flash("Please sign in to access this page.", "warning")
         return redirect(url_for('api.login'))
 
-    admin_endpoints = {'api.admin_dashboard', 'api.approve_user'}
+    admin_endpoints = {'api.admin_dashboard', 'api.approve_user', 'api.api_approve_user'}
     if endpoint in admin_endpoints and not session.get('is_admin'):
         if request.path.startswith('/api/'):
             return jsonify({"success": False, "error": "Administrator privilege required"}), 403
@@ -55,11 +56,14 @@ def enforce_route_authorization():
 @api_bp.route('/dashboard')
 def dashboard():
     stats = article_repository.get_statistics()
-    recent_articles = article_repository.get_all(limit=6, sort_by="newest")
+    recent_articles = article_repository.get_all(limit=8, sort_by="newest")
+    recent_logs = log_repository.get_recent_logs(limit=6)
+
     return render_template(
         'dashboard.html',
         stats=stats,
         recent_articles=recent_articles,
+        recent_logs=recent_logs,
         current_page='dashboard'
     )
 
@@ -69,10 +73,22 @@ def dashboard():
 @api_bp.route('/news')
 def news_explorer():
     query = request.args.get('q', '').strip()
-    selected_lang = request.args.get('lang', '').strip()
+    raw_lang = request.args.get('lang', '').strip()
     selected_domain = request.args.get('domain', '').strip()
     sort_by = request.args.get('sort', 'newest').strip()
     view_mode = request.args.get('view', 'grid').strip()
+
+    selected_lang = ''
+    if raw_lang:
+        low = raw_lang.lower()
+        if low in ('en', 'english'):
+            selected_lang = 'English'
+        elif low in ('ar', 'arabic', 'عربي'):
+            selected_lang = 'Arabic'
+        elif low in ('ru', 'russian', 'русский'):
+            selected_lang = 'Russian'
+        else:
+            selected_lang = raw_lang
 
     articles_list = article_repository.search_articles(
         query_text=query,
@@ -148,10 +164,7 @@ def scraper_view():
         with open(training_file, 'r', encoding='utf-8') as f:
             training_urls = [line.strip() for line in f if line.strip() and not line.startswith('#')]
 
-    recent_logs = []
-    log_coll = log_repository.collection
-    if log_coll is not None:
-        recent_logs = list(log_coll.find({}).sort("timestamp", -1).limit(10))
+    recent_logs = log_repository.get_recent_logs(limit=12)
 
     return render_template(
         'scraper.html',
@@ -249,10 +262,7 @@ def scheduler_view():
         "daemon_mode": True
     }
 
-    recent_logs = []
-    log_coll = log_repository.collection
-    if log_coll is not None:
-        recent_logs = list(log_coll.find({}).sort("timestamp", -1).limit(15))
+    recent_logs = log_repository.get_recent_logs(limit=15)
 
     return render_template(
         'scheduler.html',
@@ -745,11 +755,13 @@ def register():
                     'password_hash': pwd_hash,
                     'salt': salt,
                     'approved': is_admin,
-                    'is_admin': is_admin
+                    'is_admin': is_admin,
+                    'created_at': datetime.now()
                 })
                 if is_admin:
                     flash('Admin account created! You can sign in now.', 'success')
                 else:
+                    log_repository.log_event("NEW_USER", f"New user registration request from '{username}' (pending approval)", username)
                     flash('Registration submitted! Pending administrator approval.', 'success')
                 return redirect(url_for('api.login'))
         else:
@@ -834,9 +846,32 @@ def approve_user(user_id):
     users = db_connection.get_collection('users')
     if users is not None:
         users.update_one({'_id': ObjectId(user_id)}, {'$set': {'approved': True}})
+        log_repository.log_event("USER_APPROVED", f"Admin approved user {user_id}")
         flash('User account approved successfully.', 'success')
 
     return redirect(url_for('api.admin_dashboard'))
+
+
+@api_bp.route('/api/admin/approve-user/<user_id>', methods=['POST'])
+def api_approve_user(user_id):
+    if not session.get('is_admin'):
+        return jsonify({"success": False, "error": "Unauthorized"}), 403
+
+    users = db_connection.get_collection('users')
+    if users is not None:
+        users.update_one({'_id': ObjectId(user_id)}, {'$set': {'approved': True}})
+        log_repository.log_event("USER_APPROVED", f"Admin approved user ID {user_id}")
+        return jsonify({"success": True, "message": "User approved successfully"}), 200
+    return jsonify({"success": False, "error": "Database unavailable"}), 500
+
+
+@api_bp.route('/api/admin/pending-users')
+def api_pending_users():
+    if not session.get('is_admin'):
+        return jsonify({"success": False, "error": "Unauthorized"}), 403
+
+    pending_users = user_repository.get_pending_users()
+    return jsonify({"success": True, "count": len(pending_users), "users": pending_users})
 
 
 @api_bp.route('/api/cron-scrape', methods=['GET', 'POST'])
