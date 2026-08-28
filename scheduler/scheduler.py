@@ -10,15 +10,14 @@ from database.repositories import article_repository, source_repository, log_rep
 from config.config import config
 from scraper.export_csv import export_for_tableau
 
-# Set up clean scheduler logging
-logger = logging.getLogger("InsightBot.Scheduler")
+logger = logging.getLogger("insightbot.scheduler")
 
-def get_next_scrape_time(schedule_str: str, base_time=None) -> datetime:
-    """Calculates the next scraping time based on a schedule frequency string."""
+
+def get_next_scrape_time(schedule_str: str, base_time: Optional[datetime] = None) -> datetime:
     if not base_time:
-        base_time = datetime.utcnow()
+        base_time = datetime.now(timezone.utc)
     s = str(schedule_str).lower().strip()
-    
+
     intervals = {
         "15": timedelta(minutes=15),
         "30": timedelta(minutes=30),
@@ -31,29 +30,26 @@ def get_next_scrape_time(schedule_str: str, base_time=None) -> datetime:
     for key, delta in intervals.items():
         if key in s:
             return base_time + delta
-    return base_time + timedelta(days=1)  # default: daily
+    return base_time + timedelta(days=1)
+
 
 def scrape_website_job(website_doc: dict):
-    """Execution logic for scraping and extracting news from a monitored website."""
     url = website_doc.get("url")
     name = website_doc.get("name", url)
-    
+
     if not website_doc.get("active", True):
-        logger.info(f"Skipping paused website: {name}")
         return
-        
-    start_time = datetime.utcnow()
-    logger.info(f"Starting scheduled scraping for website: {name} ({url})")
-    log_repository.log_event("JOB_START", f"Scheduled scraping started for {name}", url)
-    
-    # Update website status to 'running'
+
+    start_time = datetime.now(timezone.utc)
+    log_repository.log_event("JOB_START", f"Scraping started for {name}", url)
+
     coll = source_repository.collection
     if coll is not None:
         coll.update_one({"url": url}, {"$set": {"last_status": "running", "last_scraped_at": start_time}})
-        
+
     scraper = Scraper(timeout=15, retries=3)
     extractor = ArticleExtractor()
-    
+
     articles_found = 0
     new_articles = 0
     updated_articles = 0
@@ -61,23 +57,18 @@ def scrape_website_job(website_doc: dict):
     failed_articles = 0
     error_message = None
     status = "success"
-    
+
     try:
-        # Crawl homepage to find links
         discovered_links = scraper.crawl_homepage(url, max_links=8)
         articles_found = len(discovered_links)
-        
+
         if not discovered_links:
-            logger.warning(f"No articles discovered on homepage of {url}")
-            log_repository.log_event("WARNING", f"No articles discovered on homepage", url)
+            log_repository.log_event("WARNING", "No articles found on homepage", url)
         else:
-            # Pre-scrape URL deduplication (check DB URLs first)
             articles_coll = article_repository.collection
-            
+
             for link in discovered_links:
                 norm_link = normalize_url(link)
-                
-                # Check DB for duplicate URL
                 if articles_coll is not None:
                     exists = articles_coll.find_one({
                         "$or": [
@@ -87,32 +78,28 @@ def scrape_website_job(website_doc: dict):
                     })
                     if exists:
                         duplicate_articles += 1
-                        logger.debug(f"Pre-fetch duplicate skip: {link}")
                         continue
-                
-                # Rate limit politeness delay
-                time.sleep(1.5)
-                
+
+                time.sleep(1.0)
                 html = scraper.fetch_html(link)
                 if not html:
                     failed_articles += 1
-                    log_repository.log_event("FAILED_FETCH", f"Failed to fetch content from {link}", link)
+                    log_repository.log_event("FAILED_FETCH", f"Failed to fetch {link}", link)
                     continue
-                    
-                # Pattern extraction
+
                 article = extractor.extract(html, source_url=link)
-                
+
                 if article.get('title') and article.get('body') and article['title'] != "Unknown Title":
                     saved = article_repository.save_to_db(article)
                     ingest_status = article.get("ingestion_status", "duplicate")
-                    
+
                     if saved:
                         if ingest_status == "new":
                             new_articles += 1
-                            log_repository.log_event("SUCCESS", f"Extracted and saved new article: {article['title']}", link)
+                            log_repository.log_event("SUCCESS", f"Saved: {article['title']}", link)
                         elif ingest_status == "updated":
                             updated_articles += 1
-                            log_repository.log_event("SUCCESS", f"Extracted and updated article: {article['title']}", link)
+                            log_repository.log_event("SUCCESS", f"Updated: {article['title']}", link)
                     else:
                         if ingest_status == "duplicate":
                             duplicate_articles += 1
@@ -120,22 +107,18 @@ def scrape_website_job(website_doc: dict):
                             failed_articles += 1
                 else:
                     failed_articles += 1
-                    logger.debug(f"Link {link} did not contain a valid article (empty title/body).")
-        
+
         if failed_articles > 0 and new_articles == 0:
             status = "partial"
-            
-    except Exception as e:
-        import traceback
-        logger.error(f"Scraper error for {url}: {e}")
+
+    except Exception as exc:
         status = "failed"
-        error_message = f"{str(e)}\n{traceback.format_exc()}"
-        log_repository.log_event("ERROR", f"Scraper failure: {str(e)}", url)
-        
-    end_time = datetime.utcnow()
+        error_message = str(exc)
+        log_repository.log_event("ERROR", f"Scraper failure: {exc}", url)
+
+    end_time = datetime.now(timezone.utc)
     duration = (end_time - start_time).total_seconds()
-    
-    # Save Scraping Job History
+
     scrape_job_repository.log_job(
         website_url=url,
         started_at=start_time,
@@ -149,8 +132,7 @@ def scrape_website_job(website_doc: dict):
         status=status,
         error_message=error_message
     )
-    
-    # Calculate next scheduled run
+
     next_scrape = get_next_scrape_time(website_doc.get("schedule", "daily"), end_time)
     if coll is not None:
         coll.update_one(
@@ -166,22 +148,20 @@ def scrape_website_job(website_doc: dict):
                 }
             }
         )
-        
-    # Re-export Tableau CSV on successful scraping changes
+
     if new_articles > 0 or updated_articles > 0:
         try:
             export_for_tableau()
-        except Exception as e:
-            logger.error(f"Tableau export error: {e}")
-            
-    logger.info(f"Finished scraping {name}. New: {new_articles}, Updated: {updated_articles}, Dups: {duplicate_articles}, Failed: {failed_articles}")
-    log_repository.log_event("JOB_COMPLETE", f"Scheduled scraping completed for {name}", url)
+        except Exception:
+            pass
+
+    log_repository.log_event("JOB_COMPLETE", f"Scraping completed for {name}", url)
 
 
 class BackgroundScheduler:
     _instance = None
     _lock = threading.Lock()
-    
+
     def __new__(cls, *args, **kwargs):
         with cls._lock:
             if cls._instance is None:
@@ -197,129 +177,116 @@ class BackgroundScheduler:
         self.thread = None
         self.scraping_locks = set()
         self.locks_mutex = threading.Lock()
-        
+
     def start(self):
-        """Starts the background scraping daemon thread."""
         with self._lock:
             if not self.running:
                 self.running = True
-                self.thread = threading.Thread(target=self._loop, name="InsightBotSchedulerThread", daemon=True)
+                self.thread = threading.Thread(target=self._loop, name="InsightBotScheduler", daemon=True)
                 self.thread.start()
-                logger.info("BackgroundScheduler daemon thread started.")
 
     def stop(self):
-        """Stops the background scheduler thread."""
         with self._lock:
             self.running = False
-            logger.info("BackgroundScheduler stopping...")
 
     def _loop(self):
-        logger.info("BackgroundScheduler loop started.")
-        # Delay on startup to allow DB to fully connect
-        time.sleep(5)
-        
+        time.sleep(3)
+
         while self.running:
             try:
-                from database.repositories import source_repository
                 websites = source_repository.get_all_sources_full()
-                now = datetime.utcnow()
-                
+                now = datetime.now(timezone.utc)
+
                 for doc in websites:
                     if not doc.get("active", True):
                         continue
-                        
+
                     url = doc.get("url")
                     next_run = doc.get("next_scrape_at")
-                    
+
                     is_due = False
                     if next_run is None:
                         is_due = True
                     elif isinstance(next_run, datetime):
+                        if next_run.tzinfo is None:
+                            next_run = next_run.replace(tzinfo=timezone.utc)
                         is_due = (now >= next_run)
                     elif isinstance(next_run, str):
                         try:
-                            from dateutil import parser
-                            dt = parser.isoparse(next_run)
-                            if dt.tzinfo:
-                                dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+                            dt = datetime.fromisoformat(next_run)
+                            if dt.tzinfo is None:
+                                dt = dt.replace(tzinfo=timezone.utc)
                             is_due = (now >= dt)
                         except Exception:
                             is_due = True
-                            
+
                     if is_due:
                         with self.locks_mutex:
                             if url in self.scraping_locks:
                                 continue
                             self.scraping_locks.add(url)
-                            
-                        # Run crawl asynchronously in a daemon thread so it doesn't block
+
                         threading.Thread(
                             target=self._run_scrape_with_lock,
                             args=(doc,),
-                            name=f"Scraper_{doc.get('name', 'site')}",
                             daemon=True
                         ).start()
-                        
-            except Exception as e:
-                logger.error(f"Error in scheduler background loop: {e}")
-                
+
+            except Exception as exc:
+                logger.error(f"Scheduler loop exception: {exc}")
+
             time.sleep(60)
 
     def _run_scrape_with_lock(self, website_doc: dict):
         url = website_doc.get("url")
         try:
             scrape_website_job(website_doc)
-        except Exception as e:
-            logger.error(f"Critical error scraping {url}: {e}")
+        except Exception as exc:
+            logger.error(f"Scraper error for {url}: {exc}")
         finally:
             with self.locks_mutex:
                 if url in self.scraping_locks:
                     self.scraping_locks.remove(url)
 
     def run_now(self, source_id_or_url: str):
-        """Immediately crawls a website out of schedule."""
-        from database.repositories import source_repository
-        from bson.objectid import ObjectId
-        
         coll = source_repository.collection
         if coll is None:
             return False, "Database connection unavailable"
-            
+
         try:
             doc = None
             if len(source_id_or_url) == 24:
                 try:
+                    from bson.objectid import ObjectId
                     doc = coll.find_one({"_id": ObjectId(source_id_or_url)})
                 except Exception:
                     pass
             if not doc:
                 doc = coll.find_one({"url": source_id_or_url})
             if not doc:
-                return False, "Website not found in database"
-                
+                return False, "Website not found"
+
             url = doc.get("url")
-            
             with self.locks_mutex:
                 if url in self.scraping_locks:
-                    return False, "This website is currently being scraped"
+                    return False, "Scraping already in progress for this website"
                 self.scraping_locks.add(url)
-                
+
             threading.Thread(
                 target=self._run_scrape_with_lock,
                 args=(doc,),
-                name=f"ManualScraper_{doc.get('name', 'site')}",
                 daemon=True
             ).start()
-            
-            return True, "Scraping job started successfully in background"
-        except Exception as e:
-            return False, str(e)
+
+            return True, "Scraping task started"
+        except Exception as exc:
+            return False, str(exc)
+
 
 bot_scheduler = BackgroundScheduler()
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-    logger.info("Starting scheduler in standalone CLI mode...")
+    logging.basicConfig(level=logging.INFO)
     bot_scheduler.start()
     try:
         while True:

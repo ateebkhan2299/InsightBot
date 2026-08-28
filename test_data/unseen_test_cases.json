@@ -1,0 +1,82 @@
+[
+  {
+    "name": "BBC World News",
+    "url": "https://www.bbc.com/news/world",
+    "language": "English",
+    "expected_title_contains": "BBC",
+    "expected_body_min_words": 50,
+    "category": "International News"
+  },
+  {
+    "name": "CNN International",
+    "url": "https://edition.cnn.com/world",
+    "language": "English",
+    "expected_title_contains": "CNN",
+    "expected_body_min_words": 50,
+    "category": "Broadcasting"
+  },
+  {
+    "name": "Associated Press News",
+    "url": "https://apnews.com/world-news",
+    "language": "English",
+    "expected_title_contains": "AP",
+    "expected_body_min_words": 50,
+    "category": "Newswire"
+  },
+  {
+    "name": "Ars Technica Science",
+    "url": "https://arstechnica.com",
+    "language": "English",
+    "expected_title_contains": "Ars",
+    "expected_body_min_words": 50,
+    "category": "Technology & Science"
+  },
+  {
+    "name": "NPR News",
+    "url": "https://www.npr.org/sections/news/",
+    "language": "English",
+    "expected_title_contains": "NPR",
+    "expected_body_min_words": 50,
+    "category": "Public Radio"
+  },
+  {
+    "name": "Al Jazeera Arabic",
+    "url": "https://www.aljazeera.net/news/",
+    "language": "Arabic",
+    "expected_title_contains": "الجزيرة",
+    "expected_body_min_words": 20,
+    "category": "Pan-Arab News"
+  },
+  {
+    "name": "Al Arabiya News",
+    "url": "https://www.alarabiya.net/",
+    "language": "Arabic",
+    "expected_title_contains": "العربية",
+    "expected_body_min_words": 20,
+    "category": "Middle East News"
+  },
+  {
+    "name": "Sky News Arabia",
+    "url": "https://www.skynewsarabia.com/world",
+    "language": "Arabic",
+    "expected_title_contains": "Sky",
+    "expected_body_min_words": 20,
+    "category": "Regional News"
+  },
+  {
+    "name": "RIA Novosti",
+    "url": "https://ria.ru/",
+    "language": "Russian",
+    "expected_title_contains": "РИА",
+    "expected_body_min_words": 20,
+    "category": "Russian State Agency"
+  },
+  {
+    "name": "Meduza Independent News",
+    "url": "https://meduza.io/",
+    "language": "Russian",
+    "expected_title_contains": "Meduza",
+    "expected_body_min_words": 20,
+    "category": "Independent Journalism"
+  }
+]

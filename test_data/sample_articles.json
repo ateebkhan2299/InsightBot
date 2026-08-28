@@ -1,0 +1,68 @@
+[
+  {
+    "title": "Global Climate Summit Reaches Historic Agreement on Clean Energy Transition",
+    "body": "Delegates from over 190 nations gathered in Geneva today to finalize a landmark treaty aimed at accelerating renewable energy infrastructure and phasing out fossil fuel subsidies. The multilateral agreement establishes legally binding targets for wind and solar deployment across developed and emerging economies over the next decade. Key stakeholders emphasized that cross-border technology sharing and dedicated financing mechanisms will be crucial to meeting the ambitious 2035 sustainability goals.",
+    "language": "English",
+    "publication_date": "2026-08-15",
+    "source_url": "https://www.bbc.com/news/science-environment-climate-summit-2026",
+    "domain": "bbc.com",
+    "content_hash": "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0",
+    "extracted_at": "2026-08-18T08:30:00Z",
+    "extraction_method": "pattern-based"
+  },
+  {
+    "title": "Next-Generation Autonomous Neural Networks Revolutionize Satellite Imaging",
+    "body": "Aerospace researchers and computer scientists have unveiled a groundbreaking edge-AI computer vision model capable of processing high-resolution multispectral orbital imagery directly on low-Earth orbit satellites. By filtering atmospheric noise and cloud occlusion in real-time, the system reduces downlink bandwidth consumption by more than seventy percent, enabling near-instantaneous wildfire detection, maritime navigation tracking, and agricultural crop yield forecasting.",
+    "language": "English",
+    "publication_date": "2026-08-16",
+    "source_url": "https://arstechnica.com/science/2026/08/ai-satellites-breakthrough",
+    "domain": "arstechnica.com",
+    "content_hash": "b2c3d4e5f6a17890123456789abcdef0123456789abcdef0123456789abcdef1",
+    "extracted_at": "2026-08-18T08:31:00Z",
+    "extraction_method": "pattern-based"
+  },
+  {
+    "title": "قمة الاقتصاد الرقمي في دبي تناقش مستقبل الذكاء الاصطناعي والتجارة الإلكترونية",
+    "body": "انطلقت صباح اليوم في دبي فعاليات قمة الاقتصاد الرقمي والابتكار التكنولوجي بمشاركة نخبة من الخبراء والمسؤولين الدوليين. وركزت الجلسات الافتتاحية على استراتيجيات تبني تقنيات الذكاء الاصطناعي في القطاع المصرفي، وتطوير البنية التحتية للحوسبة السحابية، وتعزيز الأمن السيبراني لحماية التعاملات المالية عبر الإنترنت. وأكد المشاركون أن الاستثمار في الكفاءات الشابة يمثل الركيزة الأساسية لتحقيق التحول الرقمي المستدام في المنطقة.",
+    "language": "Arabic",
+    "publication_date": "2026-08-17",
+    "source_url": "https://www.alarabiya.net/technology/2026/08/17/digital-economy-summit",
+    "domain": "alarabiya.net",
+    "content_hash": "c3d4e5f6a1b27890123456789abcdef0123456789abcdef0123456789abcdef2",
+    "extracted_at": "2026-08-18T08:32:00Z",
+    "extraction_method": "pattern-based"
+  },
+  {
+    "title": "مشاريع الطاقة المتجددة الكبرى تسجل نموا قياسيا في منطقة الشرق الأوسط",
+    "body": "كشفت تقارير اقتصادية حديثة عن ارتفاع الاستثمارات الموجهة لمشاريع الطاقة الشمسية وطاقة الرياح في دول مجلس التعاون الخليجي بنسبة تجاوزت خمسة وعشرين بالمائة خلال الربع الأخير. وتأتي هذه القفزة مدفوعة بالمبادرات الوطنية للوصول إلى الحياد الكربوني وتوطين سلاسل توريد الهيدروجين الأخضر لتلبية الطلب العالمي المتزايد على الطاقة النظيفة.",
+    "language": "Arabic",
+    "publication_date": "2026-08-17",
+    "source_url": "https://www.aljazeera.net/ebusiness/2026/8/17/renewable-energy-growth",
+    "domain": "aljazeera.net",
+    "content_hash": "d4e5f6a1b2c37890123456789abcdef0123456789abcdef0123456789abcdef3",
+    "extracted_at": "2026-08-18T08:33:00Z",
+    "extraction_method": "pattern-based"
+  },
+  {
+    "title": "Ученые представили новый метод квантовой криптографии для защиты данных",
+    "body": "Группа физиков и специалистов по информационной безопасности успешно протестировала протокол квантового распределения ключей на оптоволоконной линии протяженностью более двухсот километров. Новый подход обеспечивает абсолютную устойчивость к попыткам несанкционированного перехвата информации и открывает широкие возможности для создания защищенных телекоммуникационных сетей нового поколения.",
+    "language": "Russian",
+    "publication_date": "2026-08-16",
+    "source_url": "https://ria.ru/20260816/quantum-cryptography.html",
+    "domain": "ria.ru",
+    "content_hash": "e5f6a1b2c3d47890123456789abcdef0123456789abcdef0123456789abcdef4",
+    "extracted_at": "2026-08-18T08:34:00Z",
+    "extraction_method": "pattern-based"
+  },
+  {
+    "title": "Развитие беспилотного транспорта и инфраструктуры умных городов",
+    "body": "В рамках международной конференции по урбанистике были представлены результаты пилотного проекта интеграции автономных электробусов в систему общественного транспорта. За шесть месяцев тестирования беспилотные маршруты перевезли более ста тысяч пассажиров без единого инцидента, продемонстрировав высокую эффективность алгоритмов машинного обучения в условиях плотного городского трафика.",
+    "language": "Russian",
+    "publication_date": "2026-08-17",
+    "source_url": "https://meduza.io/feature/2026/08/17/smart-city-transport",
+    "domain": "meduza.io",
+    "content_hash": "f6a1b2c3d4e57890123456789abcdef0123456789abcdef0123456789abcdef5",
+    "extracted_at": "2026-08-18T08:35:00Z",
+    "extraction_method": "pattern-based"
+  }
+]

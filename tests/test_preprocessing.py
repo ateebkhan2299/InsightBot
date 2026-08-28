@@ -1,7 +1,7 @@
 import unittest
-from bs4 import BeautifulSoup
 from preprocessing.cleaner import HTMLCleaner
 from preprocessing.language_utils import LanguageUtils
+
 
 class TestPreprocessing(unittest.TestCase):
     def test_clean_html(self):
@@ -23,6 +23,7 @@ class TestPreprocessing(unittest.TestCase):
     def test_language_detection_english(self):
         text = "Hello world this is breaking news today"
         self.assertEqual(LanguageUtils.detect_language(text), "English")
+
 
 if __name__ == '__main__':
     unittest.main()

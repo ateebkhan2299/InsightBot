@@ -2,6 +2,7 @@ import unittest
 from scraper.extractor import ArticleExtractor
 from scraper.pattern_mining import PatternMiner
 
+
 class TestExtractor(unittest.TestCase):
     def test_extractor_initialization(self):
         extractor = ArticleExtractor()
@@ -20,6 +21,7 @@ class TestExtractor(unittest.TestCase):
         self.assertEqual(result['title'], 'Test Title')
         self.assertIn('Test body paragraph', result['body'])
         self.assertEqual(result['source_url'], 'http://test.com')
+
 
 if __name__ == '__main__':
     unittest.main()
