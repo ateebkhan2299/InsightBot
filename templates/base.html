@@ -65,6 +65,17 @@
         --accent-amber: #FBBF24; --accent-amber-bg: rgba(251,191,36,0.12);
         --accent-blue: #60A5FA; --accent-blue-bg: rgba(96,165,250,0.12);
       }
+
+      .hidden, [hidden] {
+        display: none !important;
+      }
+      .notif-dropdown-box {
+        animation: notifFade 0.15s ease-out;
+      }
+      @keyframes notifFade {
+        from { opacity: 0; transform: translateY(-6px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
     </style>
 
     {% block head %}{% endblock %}
@@ -199,7 +210,7 @@
                     </button>
 
                     <!-- Notifications Dropdown -->
-                    <div id="notifDropdown" class="hidden" style="position:absolute;right:0;top:44px;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);z-index:1050;padding:14px;">
+                    <div id="notifDropdown" class="notif-dropdown-box" style="display:none;position:absolute;right:0;top:44px;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);z-index:1050;padding:14px;">
                         <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--border-light);margin-bottom:10px;">
                             <span style="font-weight:700;font-size:13px;color:var(--text-primary);">
                                 <i class="fas fa-bell" style="color:var(--primary);margin-right:6px;"></i> Notifications
@@ -400,16 +411,24 @@
         }
 
         function toggleNotifications(e) {
-            if (e) e.stopPropagation();
+            if (e) {
+                e.stopPropagation();
+                e.preventDefault();
+            }
             const dropdown = document.getElementById('notifDropdown');
-            if (dropdown) dropdown.classList.toggle('hidden');
+            if (!dropdown) return;
+            
+            const isVisible = dropdown.style.display === 'block';
+            dropdown.style.display = isVisible ? 'none' : 'block';
         }
 
         document.addEventListener('click', (e) => {
             const dropdown = document.getElementById('notifDropdown');
             const notifBtn = document.getElementById('notifBtn');
-            if (dropdown && !dropdown.contains(e.target) && notifBtn && !notifBtn.contains(e.target)) {
-                dropdown.classList.add('hidden');
+            if (dropdown && dropdown.style.display === 'block') {
+                if (!dropdown.contains(e.target) && !notifBtn.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
             }
         });
 
