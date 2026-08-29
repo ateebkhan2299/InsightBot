@@ -30,6 +30,9 @@ def create_app():
         env_key = os.getenv("SECRET_KEY")
         app.secret_key = env_key if env_key else config.SECRET_KEY
 
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
     db_connection.connect()
 
     if not (os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV') or app.config.get('TESTING')):
@@ -102,6 +105,9 @@ def create_app():
 
 
 app = create_app()
+
+from werkzeug.middleware.proxy_fix import ProxyFix
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 if WhiteNoise is not None:
     static_dir = os.path.join(os.path.dirname(__file__), 'static')

