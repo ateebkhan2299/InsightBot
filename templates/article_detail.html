@@ -164,7 +164,7 @@
             </div>
             <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
                 {% for item in related_articles %}
-                <a href="{{ url_for('api.article_detail', title=item.title) }}" style="text-decoration:none;color:inherit;display:block;padding:10px;border-radius:8px;background:var(--gray-50);border:1px solid var(--border);transition:all 0.15s;" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background='var(--gray-50)'">
+                <a href="{{ url_for('api.article_detail', identifier=item._id or item.title) }}" style="text-decoration:none;color:inherit;display:block;padding:10px;border-radius:8px;background:var(--gray-50);border:1px solid var(--border);transition:all 0.15s;" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background='var(--gray-50)'">
                     <div style="font-size:13px;font-weight:600;color:var(--text-primary);line-height:1.4;margin-bottom:4px;">{{ item.title }}</div>
                     <div style="font-size:11.5px;color:var(--text-muted);">{{ item.source_url|domain_name }} &middot; {{ item.body|reading_time }} min read</div>
                 </a>

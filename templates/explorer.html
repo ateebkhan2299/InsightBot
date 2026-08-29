@@ -175,16 +175,22 @@
                                 <span class="badge badge-blue">EN</span>
                             {% endif %}
                         </div>
-                        <a href="{{ url_for('api.article_detail', title=article.title) }}"
+                        <a href="{{ url_for('api.article_detail', identifier=article._id or article.title) }}"
                            class="news-card-title" style="display:block;text-decoration:none;color:inherit;">
                             {{ article.title }}
                         </a>
                         <div class="news-card-snippet">{{ article.body | snippet(150) }}</div>
-                        <div style="margin-top:8px;">
-                            <a href="{{ url_for('api.article_detail', title=article.title) }}"
+                        <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;">
+                            <a href="{{ url_for('api.article_detail', identifier=article._id or article.title) }}"
                                class="btn btn-ghost btn-sm" style="padding:4px 8px;font-size:12px;">
                                 Read more <i class="fas fa-arrow-right" style="font-size:10px;"></i>
                             </a>
+                            {% if session.get('user_id') %}
+                            <button onclick="toggleQuickSave('{{ article.title }}', this)" 
+                                    class="btn-icon" title="Save Article" style="color:var(--text-muted);">
+                                <i class="far fa-bookmark" style="font-size:12px;"></i>
+                            </button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -209,5 +215,39 @@
     </div>
 
 </div>
+
+<script>
+async function toggleQuickSave(title, btn) {
+    const icon = btn.querySelector('i');
+    const isSaved = icon.classList.contains('fas');
+    const url = isSaved ? '/api/articles/unsave' : '/api/articles/save';
+    
+    try {
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title: title})
+        });
+        const data = await resp.json();
+        if (data.success) {
+            if (isSaved) {
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+                btn.style.color = 'var(--text-muted)';
+                if (typeof showToast === 'function') showToast("Removed from bookmarks", "info");
+            } else {
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+                btn.style.color = 'var(--primary-color)';
+                if (typeof showToast === 'function') showToast("Saved to bookmarks", "success");
+            }
+        } else {
+            if (typeof showToast === 'function') showToast(data.error || "Failed to update bookmark", "danger");
+        }
+    } catch(err) {
+        console.error(err);
+    }
+}
+</script>
 
 {% endblock %}

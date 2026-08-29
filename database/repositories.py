@@ -146,28 +146,36 @@ class ArticleRepository:
             logger.error(f"Error saving article: {exc}")
             return False
 
+    def _format_doc(self, doc: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        if not doc:
+            return None
+        if '_id' in doc:
+            doc['_id'] = str(doc['_id'])
+            doc['id'] = doc['_id']
+        return doc
+
     def get_all(self, limit: int = 100, sort_by: str = "newest") -> List[Dict[str, Any]]:
         coll = self.collection
         if coll is not None:
             sort_field, sort_order = self._get_sort_params(sort_by)
-            query = coll.find({}, {"_id": 0})
+            query = coll.find({})
             if sort_field:
                 query = query.sort(sort_field, sort_order)
             if limit > 0:
                 query = query.limit(limit)
-            return list(query)
+            return [self._format_doc(d) for d in query if d]
         return []
 
     def get_by_language(self, language: str, limit: int = 100, sort_by: str = "newest") -> List[Dict[str, Any]]:
         coll = self.collection
         if coll is not None:
             sort_field, sort_order = self._get_sort_params(sort_by)
-            query = coll.find({"language": language}, {"_id": 0})
+            query = coll.find({"language": language})
             if sort_field:
                 query = query.sort(sort_field, sort_order)
             if limit > 0:
                 query = query.limit(limit)
-            return list(query)
+            return [self._format_doc(d) for d in query if d]
         return []
 
     def search_articles(self, query_text: str = "", language: str = "", sort_by: str = "newest", limit: int = 100) -> List[Dict[str, Any]]:
@@ -189,25 +197,157 @@ class ArticleRepository:
             ]
 
         sort_field, sort_order = self._get_sort_params(sort_by)
-        cursor = coll.find(mongo_filter, {"_id": 0})
+        cursor = coll.find(mongo_filter)
         if sort_field:
             cursor = cursor.sort(sort_field, sort_order)
         if limit > 0:
             cursor = cursor.limit(limit)
 
-        return list(cursor)
+        return [self._format_doc(d) for d in cursor if d]
 
     def search_by_keyword(self, keyword: str) -> List[Dict[str, Any]]:
         return self.search_articles(query_text=keyword)
 
-    def get_article_by_title(self, title: str) -> Optional[Dict[str, Any]]:
+    def get_article(self, identifier: str) -> Optional[Dict[str, Any]]:
         coll = self.collection
-        if coll is not None:
-            doc = coll.find_one({"title": title}, {"_id": 0})
-            if doc:
-                return doc
-            return coll.find_one({"title": {"$regex": f"^{re.escape(title)}$", "$options": "i"}}, {"_id": 0})
+        if coll is None or not identifier:
+            return None
+
+        from bson.objectid import ObjectId
+        import urllib.parse
+
+        clean_id = str(identifier).strip()
+        unquoted = urllib.parse.unquote(clean_id).strip()
+
+        # 1. Try lookup by ObjectId
+        if len(clean_id) == 24:
+            try:
+                doc = coll.find_one({"_id": ObjectId(clean_id)})
+                if doc:
+                    return self._format_doc(doc)
+            except Exception:
+                pass
+
+        # 2. Try exact title lookup
+        for t in (clean_id, unquoted):
+            if t:
+                doc = coll.find_one({"title": t})
+                if doc:
+                    return self._format_doc(doc)
+
+        # 3. Try case-insensitive regex title lookup
+        for t in (clean_id, unquoted):
+            if t:
+                try:
+                    doc = coll.find_one({"title": {"$regex": f"^{re.escape(t)}$", "$options": "i"}})
+                    if doc:
+                        return self._format_doc(doc)
+                except Exception:
+                    pass
+
+        # 4. Try normalized title (handling en-dash vs hyphen, whitespace, newlines)
+        normalized_t = unquoted.replace('–', '-').replace('—', '-').replace('\n', ' ')
+        normalized_t = re.sub(r'\s+', ' ', normalized_t).strip()
+        if normalized_t:
+            for doc in coll.find({}):
+                doc_title = doc.get("title", "")
+                norm_doc_title = doc_title.replace('–', '-').replace('—', '-').replace('\n', ' ')
+                norm_doc_title = re.sub(r'\s+', ' ', norm_doc_title).strip()
+                if norm_doc_title.lower() == normalized_t.lower():
+                    return self._format_doc(doc)
+
+        # 5. Try matching by source_url or normalized_url
+        for u in (clean_id, unquoted):
+            if 'http' in u or '.' in u:
+                doc = coll.find_one({"$or": [{"source_url": u}, {"normalized_url": normalize_url(u)}]})
+                if doc:
+                    return self._format_doc(doc)
+
+        # 6. Try partial prefix or substring title match if >= 10 chars
+        if len(unquoted) >= 10:
+            prefix = unquoted[:30]
+            try:
+                doc = coll.find_one({"title": {"$regex": re.escape(prefix), "$options": "i"}})
+                if doc:
+                    return self._format_doc(doc)
+            except Exception:
+                pass
+
         return None
+
+    def get_article_by_title(self, title: str) -> Optional[Dict[str, Any]]:
+        return self.get_article(title)
+
+    def get_article_by_id(self, article_id: str) -> Optional[Dict[str, Any]]:
+        return self.get_article(article_id)
+
+    def create_article(self, article_data: Dict[str, Any]) -> Optional[str]:
+        coll = self.collection
+        if coll is None:
+            return None
+        now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        title = article_data.get("title", "").strip()
+        body = article_data.get("body", "").strip()
+        source_url = article_data.get("source_url", "").strip()
+        pub_date = article_data.get("publication_date", "Recent").strip()
+        language = article_data.get("language", "English").strip()
+
+        domain = ""
+        if source_url:
+            try:
+                domain = urlparse(source_url).netloc.replace("www.", "")
+            except Exception:
+                pass
+
+        content_hash = compute_content_hash(title, body, domain)
+        doc = {
+            "title": title,
+            "body": body,
+            "source_url": source_url,
+            "normalized_url": normalize_url(source_url) if source_url else "",
+            "domain": domain,
+            "publication_date": pub_date,
+            "language": language,
+            "content_hash": content_hash,
+            "extracted_at": now_iso,
+            "extraction_method": "manual-admin",
+            "version": 1
+        }
+        res = coll.insert_one(doc)
+        return str(res.inserted_id)
+
+    def update_article(self, article_id: str, update_data: Dict[str, Any]) -> bool:
+        coll = self.collection
+        if coll is None:
+            return False
+        from bson.objectid import ObjectId
+        try:
+            allowed = {"title", "body", "language", "publication_date", "source_url"}
+            fields_to_set = {k: v for k, v in update_data.items() if k in allowed}
+            fields_to_set["last_updated_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            if "source_url" in fields_to_set:
+                fields_to_set["normalized_url"] = normalize_url(fields_to_set["source_url"])
+                try:
+                    fields_to_set["domain"] = urlparse(fields_to_set["source_url"]).netloc.replace("www.", "")
+                except Exception:
+                    pass
+            res = coll.update_one({"_id": ObjectId(article_id)}, {"$set": fields_to_set})
+            return res.matched_count > 0
+        except Exception as exc:
+            logger.error(f"Error updating article {article_id}: {exc}")
+            return False
+
+    def delete_article(self, article_id: str) -> bool:
+        coll = self.collection
+        if coll is None:
+            return False
+        from bson.objectid import ObjectId
+        try:
+            res = coll.delete_one({"_id": ObjectId(article_id)})
+            return res.deleted_count > 0
+        except Exception as exc:
+            logger.error(f"Error deleting article {article_id}: {exc}")
+            return False
 
     def get_statistics(self) -> Dict[str, Any]:
         coll = self.collection
@@ -553,17 +693,12 @@ class SavedArticleRepository:
         try:
             saved_docs = list(coll.find({"user_id": user_id}).sort("saved_at", -1))
             articles = []
-            art_coll = db_connection.get_collection('articles')
             for doc in saved_docs:
                 title = doc.get("article_title", "")
-                if art_coll is not None:
-                    article = art_coll.find_one(
-                        {"title": {"$regex": f"^{re.escape(title)}$", "$options": "i"}},
-                        {"_id": 0}
-                    )
-                    if article:
-                        article["saved_at"] = doc.get("saved_at", "")
-                        articles.append(article)
+                art = article_repository.get_article(title)
+                if art:
+                    art["saved_at"] = doc.get("saved_at", "")
+                    articles.append(art)
             return articles
         except Exception as exc:
             logger.error(f"Failed to fetch saved articles: {exc}")
@@ -578,13 +713,60 @@ class UserRepository:
     def collection(self):
         return db_connection.get_collection(self.collection_name)
 
+    def _format_user(self, doc: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        if not doc:
+            return None
+        if '_id' in doc:
+            doc['_id'] = str(doc['_id'])
+            doc['id'] = doc['_id']
+        return doc
+
+    def get_all_users(self) -> List[Dict[str, Any]]:
+        coll = self.collection
+        if coll is not None:
+            docs = list(coll.find({}).sort("created_at", -1))
+            return [self._format_user(d) for d in docs if d]
+        return []
+
+    def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+        coll = self.collection
+        if coll is not None and user_id:
+            from bson.objectid import ObjectId
+            try:
+                doc = coll.find_one({'_id': ObjectId(user_id)})
+                return self._format_user(doc)
+            except Exception:
+                pass
+        return None
+
+    def get_user_by_username(self, username: str) -> Optional[Dict[str, Any]]:
+        coll = self.collection
+        if coll is not None and username:
+            doc = coll.find_one({'username': re.compile(f'^{re.escape(username.strip())}$', re.I)})
+            return self._format_user(doc)
+        return None
+
+    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        coll = self.collection
+        if coll is not None and email:
+            doc = coll.find_one({'email': re.compile(f'^{re.escape(email.strip())}$', re.I)})
+            return self._format_user(doc)
+        return None
+
+    def get_user_by_username_or_email(self, identifier: str) -> Optional[Dict[str, Any]]:
+        coll = self.collection
+        if coll is None or not identifier:
+            return None
+        ident = identifier.strip()
+        regex = re.compile(f'^{re.escape(ident)}$', re.I)
+        doc = coll.find_one({'$or': [{'username': regex}, {'email': regex}]})
+        return self._format_user(doc)
+
     def get_pending_users(self) -> List[Dict[str, Any]]:
         coll = self.collection
         if coll is not None:
             docs = list(coll.find({"approved": False}))
-            for doc in docs:
-                doc['_id'] = str(doc['_id'])
-            return docs
+            return [self._format_user(d) for d in docs if d]
         return []
 
     def get_pending_count(self) -> int:
@@ -597,8 +779,55 @@ class UserRepository:
         coll = self.collection
         if coll is not None:
             from bson.objectid import ObjectId
-            res = coll.update_one({'_id': ObjectId(user_id)}, {'$set': {'approved': True}})
-            return res.modified_count > 0
+            try:
+                res = coll.update_one({'_id': ObjectId(user_id)}, {'$set': {'approved': True}})
+                return res.modified_count > 0 or res.matched_count > 0
+            except Exception:
+                pass
+        return False
+
+    def toggle_user_status(self, user_id: str, approved: bool) -> bool:
+        coll = self.collection
+        if coll is not None:
+            from bson.objectid import ObjectId
+            try:
+                res = coll.update_one({'_id': ObjectId(user_id)}, {'$set': {'approved': approved}})
+                return res.matched_count > 0
+            except Exception:
+                pass
+        return False
+
+    def update_user_role(self, user_id: str, is_admin: bool) -> bool:
+        coll = self.collection
+        if coll is not None:
+            from bson.objectid import ObjectId
+            try:
+                res = coll.update_one({'_id': ObjectId(user_id)}, {'$set': {'is_admin': is_admin}})
+                return res.matched_count > 0
+            except Exception:
+                pass
+        return False
+
+    def delete_user(self, user_id: str) -> bool:
+        coll = self.collection
+        if coll is not None:
+            from bson.objectid import ObjectId
+            try:
+                res = coll.delete_one({'_id': ObjectId(user_id)})
+                return res.deleted_count > 0
+            except Exception:
+                pass
+        return False
+
+    def update_profile(self, user_id: str, update_fields: Dict[str, Any]) -> bool:
+        coll = self.collection
+        if coll is not None:
+            from bson.objectid import ObjectId
+            try:
+                res = coll.update_one({'_id': ObjectId(user_id)}, {'$set': update_fields})
+                return res.matched_count > 0
+            except Exception:
+                pass
         return False
 
 

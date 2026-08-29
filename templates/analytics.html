@@ -228,72 +228,93 @@ document.addEventListener('DOMContentLoaded', () => {
         maintainAspectRatio: false
     };
 
+    const dateStats = {{ stats.date_stats | tojson if stats and stats.date_stats else '{}' }};
+    const dateLabels = Object.keys(dateStats).length ? Object.keys(dateStats) : ['Today'];
+    const dateValues = Object.values(dateStats).length ? Object.values(dateStats) : [{{ stats.total_articles or 0 }}];
+
     // Article Volume Over Time (area line)
-    new Chart(document.getElementById('articleVolumeChart'), {
-        type: 'line',
-        data: {
-            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-            datasets: [{
-                data: [38, 62, 48, 92, 76, 110, 68],
-                borderColor: '#3B5BDB',
-                backgroundColor: 'rgba(59,91,219,0.08)',
-                borderWidth: 2.5,
-                fill: true,
-                tension: 0.4,
-                pointRadius: 0,
-                pointHoverRadius: 5,
-                pointBackgroundColor: '#3B5BDB'
-            }]
-        },
-        options: {
-            ...chartDefaults,
-            scales: {
-                x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 }, color: '#9CA3AF' } },
-                y: { grid: { color: '#F3F4F6' }, border: { display: false }, ticks: { font: { size: 11 }, color: '#9CA3AF' } }
+    const volCtx = document.getElementById('articleVolumeChart');
+    if (volCtx) {
+        new Chart(volCtx, {
+            type: 'line',
+            data: {
+                labels: dateLabels,
+                datasets: [{
+                    data: dateValues,
+                    borderColor: '#3B5BDB',
+                    backgroundColor: 'rgba(59,91,219,0.08)',
+                    borderWidth: 2.5,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#3B5BDB'
+                }]
+            },
+            options: {
+                ...chartDefaults,
+                scales: {
+                    x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 }, color: '#9CA3AF' } },
+                    y: { grid: { color: '#F3F4F6' }, border: { display: false }, ticks: { font: { size: 11 }, color: '#9CA3AF' } }
+                }
             }
-        }
-    });
+        });
+    }
 
     // Language Distribution Donut
-    new Chart(document.getElementById('langDistChart'), {
-        type: 'doughnut',
-        data: {
-            labels: ['English', 'Arabic', 'Russian'],
-            datasets: [{
-                data: [60, 24, 16],
-                backgroundColor: ['#1E3A5F', '#3B5BDB', '#818CF8'],
-                borderWidth: 0,
-                hoverOffset: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '72%',
-            plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.label}: ${c.raw}%` } } }
-        }
-    });
+    const langStats = {{ stats.language_stats | tojson if stats and stats.language_stats else '{}' }};
+    const langLabels = Object.keys(langStats).length ? Object.keys(langStats) : ['English', 'Arabic', 'Russian'];
+    const langValues = Object.values(langStats).length ? Object.values(langStats) : [1, 0, 0];
+
+    const langCtx = document.getElementById('langDistChart');
+    if (langCtx) {
+        new Chart(langCtx, {
+            type: 'doughnut',
+            data: {
+                labels: langLabels,
+                datasets: [{
+                    data: langValues,
+                    backgroundColor: ['#1E3A5F', '#10B981', '#6366F1', '#F59E0B', '#EC4899'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '72%',
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.label}: ${c.raw} articles` } } }
+            }
+        });
+    }
 
     // Articles by Source Bar Chart
-    new Chart(document.getElementById('sourceBarChart'), {
-        type: 'bar',
-        data: {
-            labels: ['Reuters', 'Al Jazeera', 'TASS', 'BBC', 'AP'],
-            datasets: [{
-                data: [1245, 890, 654, 420, 1050],
-                backgroundColor: ['#1E3A5F', '#9CA3AF', '#1E3A5F', '#9CA3AF', '#1E3A5F'],
-                borderRadius: 4,
-                borderSkipped: false
-            }]
-        },
-        options: {
-            ...chartDefaults,
-            scales: {
-                x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 11 }, color: '#9CA3AF' } },
-                y: { grid: { color: '#F3F4F6' }, border: { display: false }, ticks: { font: { size: 11 }, color: '#9CA3AF' } }
+    const domainStats = {{ stats.domain_stats | tojson if stats and stats.domain_stats else '{}' }};
+    const domainLabels = Object.keys(domainStats).length ? Object.keys(domainStats) : ['Sources'];
+    const domainValues = Object.values(domainStats).length ? Object.values(domainStats) : [{{ stats.total_articles or 0 }}];
+
+    const srcCtx = document.getElementById('sourceBarChart');
+    if (srcCtx) {
+        new Chart(srcCtx, {
+            type: 'bar',
+            data: {
+                labels: domainLabels,
+                datasets: [{
+                    data: domainValues,
+                    backgroundColor: ['#1E3A5F', '#3B5BDB', '#10B981', '#6366F1', '#F59E0B', '#8B5CF6'],
+                    borderRadius: 4,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                ...chartDefaults,
+                scales: {
+                    x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 10 }, color: '#9CA3AF' } },
+                    y: { grid: { color: '#F3F4F6' }, border: { display: false }, ticks: { font: { size: 11 }, color: '#9CA3AF' } }
+                }
             }
-        }
-    });
+        });
+    }
 });
 </script>
 {% endblock %}

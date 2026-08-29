@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}Saved Articles — InsightBot{% endblock %}
 
 {% block content %}
@@ -49,7 +49,7 @@
         <!-- Card Body -->
         <div style="padding:16px 18px;flex:1;display:flex;flex-direction:column;gap:10px;">
             <!-- Title -->
-            <a href="{{ url_for('api.article_detail', title=article.title) }}"
+            <a href="{{ url_for('api.article_detail', identifier=article._id or article.title) }}"
                style="text-decoration:none;color:inherit;">
                 <h3 style="font-size:14px;font-weight:700;color:var(--text-primary);line-height:1.45;margin:0;
                             display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">
@@ -74,7 +74,7 @@
 
         <!-- Card Footer Actions -->
         <div style="padding:12px 18px;border-top:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;gap:8px;">
-            <a href="{{ url_for('api.article_detail', title=article.title) }}"
+            <a href="{{ url_for('api.article_detail', identifier=article._id or article.title) }}"
                class="btn btn-primary btn-sm" style="flex:1;text-align:center;">
                 <i class="fas fa-book-open" style="font-size:11px;"></i>
                 Read

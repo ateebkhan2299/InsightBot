@@ -109,7 +109,7 @@
                     <tr data-lang="{{ article.language or 'English' }}">
                         <td>
                             <div style="max-width:360px;">
-                                <a href="{{ url_for('api.article_detail', title=article.title) }}" style="font-weight:600;font-size:13.5px;color:var(--text-primary);text-decoration:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                <a href="{{ url_for('api.article_detail', identifier=article._id or article.title) }}" style="font-weight:600;font-size:13.5px;color:var(--text-primary);text-decoration:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                                     {{ article.title }}
                                 </a>
                                 <div style="font-size:12px;color:var(--text-muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:350px;">
@@ -134,7 +134,7 @@
                             {{ article.publication_date or 'N/A' }}
                         </td>
                         <td style="text-align:right;">
-                            <a href="{{ url_for('api.article_detail', title=article.title) }}" class="table-action-btn" title="Read Article">
+                            <a href="{{ url_for('api.article_detail', identifier=article._id or article.title) }}" class="table-action-btn" title="Read Article">
                                 <i class="fas fa-eye"></i>
                             </a>
                         </td>

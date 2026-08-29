@@ -4,87 +4,392 @@
 {% block content %}
 
 <!-- HEADER -->
-<div class="page-header-row" style="margin-bottom:24px;">
+<div class="page-header-row" style="margin-bottom:20px;">
     <div>
         <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--accent-red-light, #FEE2E2);border:1px solid var(--accent-red-mid, #FECACA);border-radius:99px;font-size:11px;font-weight:700;color:var(--accent-red);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
             <i class="fas fa-shield-alt"></i> Administration Panel
         </div>
-        <h1 style="font-size:26px;font-weight:700;color:var(--text-primary);letter-spacing:-0.5px;">
-            User Access &amp; Permissions Control
+        <h1 style="font-size:24px;font-weight:700;color:var(--text-primary);letter-spacing:-0.5px;">
+            System Control &amp; Data Operations
         </h1>
         <p style="font-size:13.5px;color:var(--text-secondary);margin-top:4px;">
-            Approve newly registered accounts and oversee team authorizations.
+            Manage user accounts, roles, authorizations, and full article database CRUD.
         </p>
     </div>
-    <span style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;color:var(--primary);">
-        Total Users: <strong style="font-family:monospace;">{{ users|length }}</strong>
-    </span>
+    <div style="display:flex;gap:8px;">
+        <button onclick="openCreateArticleModal()" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus"></i> New Article
+        </button>
+    </div>
 </div>
 
-<!-- USERS TABLE -->
-<div class="card">
-    <div class="card-header">
-        <div class="card-title">Registered Users</div>
-        <div class="card-subtitle">Manage approvals and role assignments</div>
+<!-- STATS METRICS -->
+<div class="grid-4" style="margin-bottom:20px;">
+    <div class="card stat-card">
+        <div class="stat-icon" style="background:var(--primary-light);color:var(--primary);">
+            <i class="fas fa-users"></i>
+        </div>
+        <div>
+            <div class="stat-value">{{ users|length }}</div>
+            <div class="stat-label">Total Users</div>
+        </div>
     </div>
-    <div class="data-table-wrap">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>User</th>
-                    <th>Role</th>
-                    <th>Status</th>
-                    <th style="text-align:right;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for u in users %}
-                <tr>
-                    <td>
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <div style="width:32px;height:32px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:12px;font-weight:700;text-transform:uppercase;">
-                                {{ u.username[:2] }}
+    <div class="card stat-card">
+        <div class="stat-icon" style="background:rgba(234,88,12,0.1);color:#EA580C;">
+            <i class="fas fa-user-clock"></i>
+        </div>
+        <div>
+            <div class="stat-value">
+                {{ users|selectattr('approved', 'equalto', False)|list|length }}
+            </div>
+            <div class="stat-label">Pending Approval</div>
+        </div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-icon" style="background:rgba(16,185,129,0.1);color:#10B981;">
+            <i class="fas fa-newspaper"></i>
+        </div>
+        <div>
+            <div class="stat-value">{{ articles|length }}</div>
+            <div class="stat-label">Total Articles</div>
+        </div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-icon" style="background:rgba(99,102,241,0.1);color:#6366F1;">
+            <i class="fas fa-database"></i>
+        </div>
+        <div>
+            <div class="stat-value">{{ stats.active_sources_count or 40 }}</div>
+            <div class="stat-label">Active Sources</div>
+        </div>
+    </div>
+</div>
+
+<!-- TAB NAVIGATION -->
+<div style="display:flex;gap:12px;border-bottom:1px solid var(--border);margin-bottom:20px;">
+    <button onclick="switchAdminTab('usersTab', this)" class="admin-tab-btn active" style="padding:10px 18px;border:none;background:none;font-size:14px;font-weight:600;color:var(--primary);border-bottom:2px solid var(--primary);cursor:pointer;">
+        <i class="fas fa-users-cog" style="margin-right:6px;"></i> User Management ({{ users|length }})
+    </button>
+    <button onclick="switchAdminTab('articlesTab', this)" class="admin-tab-btn" style="padding:10px 18px;border:none;background:none;font-size:14px;font-weight:600;color:var(--text-muted);border-bottom:2px solid transparent;cursor:pointer;">
+        <i class="fas fa-newspaper" style="margin-right:6px;"></i> Article Management ({{ articles|length }})
+    </button>
+</div>
+
+<!-- USERS MANAGEMENT TAB -->
+<div id="usersTab" class="admin-tab-content">
+    <div class="card">
+        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+                <div class="card-title">User Accounts &amp; Access Roles</div>
+                <div class="card-subtitle">Approve registrations, toggle administrator privilege, or deactivate access</div>
+            </div>
+            <input type="text" id="userSearchInput" onkeyup="filterAdminUsers()" placeholder="Search users by name/email..." class="form-input" style="max-width:260px;font-size:12.5px;padding:6px 12px;">
+        </div>
+        <div class="data-table-wrap">
+            <table class="data-table" id="adminUsersTable">
+                <thead>
+                    <tr>
+                        <th>User / Identity</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Account Status</th>
+                        <th style="text-align:right;">Actions &amp; Moderation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <div style="width:34px;height:34px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:12px;font-weight:700;text-transform:uppercase;">
+                                    {{ u.username[:2] }}
+                                </div>
+                                <div>
+                                    <div style="font-weight:600;font-size:13.5px;color:var(--text-primary);">{{ u.fullname or u.username }}</div>
+                                    <div style="font-size:11.5px;color:var(--text-muted);font-family:monospace;">@{{ u.username }}</div>
+                                </div>
                             </div>
-                            <span style="font-weight:600;font-size:13.5px;">{{ u.username }}</span>
-                        </div>
-                    </td>
-                    <td>
-                        {% if u.is_admin %}
-                            <span class="badge badge-green">
-                                <i class="fas fa-crown" style="margin-right:3px;"></i> Administrator
-                            </span>
-                        {% else %}
-                            <span class="badge badge-blue">Standard User</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if u.approved %}
-                            <span class="badge badge-green">
-                                <i class="fas fa-check-circle" style="margin-right:3px;"></i> Approved
-                            </span>
-                        {% else %}
-                            <span class="badge badge-amber">
-                                <i class="fas fa-clock" style="margin-right:3px;"></i> Pending Approval
-                            </span>
-                        {% endif %}
-                    </td>
-                    <td style="text-align:right;">
-                        {% if not u.approved %}
-                            <form method="POST" action="{{ url_for('api.approve_user', user_id=u._id) }}" style="display:inline;">
-                                <button type="submit" class="btn btn-sm btn-success">
-                                    <i class="fas fa-check" style="font-size:10px;"></i>
-                                    Approve User
-                                </button>
-                            </form>
-                        {% else %}
-                            <span style="font-size:12px;color:var(--text-muted);font-weight:600;">Access Granted</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        </td>
+                        <td>
+                            <span style="font-size:12.5px;color:var(--text-secondary);">{{ u.email or 'N/A' }}</span>
+                        </td>
+                        <td>
+                            {% if u.is_admin %}
+                                <span class="badge badge-green">
+                                    <i class="fas fa-crown" style="margin-right:3px;"></i> Admin
+                                </span>
+                            {% else %}
+                                <span class="badge badge-blue">Analyst / User</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.approved %}
+                                <span class="badge badge-green">
+                                    <i class="fas fa-check-circle" style="margin-right:3px;"></i> Active
+                                </span>
+                            {% else %}
+                                <span class="badge badge-amber">
+                                    <i class="fas fa-clock" style="margin-right:3px;"></i> Pending
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align:right;">
+                            <div style="display:inline-flex;align-items:center;gap:6px;">
+                                {% if not u.approved %}
+                                <form method="POST" action="{{ url_for('api.approve_user', user_id=u._id) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-success" title="Approve Account">
+                                        <i class="fas fa-check"></i> Approve
+                                    </button>
+                                </form>
+                                {% endif %}
+
+                                <!-- Role Toggle -->
+                                <form method="POST" action="{{ url_for('api.admin_user_role', user_id=u._id) }}" style="display:inline;">
+                                    <input type="hidden" name="is_admin" value="{{ 'false' if u.is_admin else 'true' }}">
+                                    <button type="submit" class="btn btn-sm btn-secondary" title="{{ 'Demote to Analyst' if u.is_admin else 'Promote to Admin' }}">
+                                        <i class="fas {{ 'fa-user' if u.is_admin else 'fa-crown' }}"></i>
+                                        {{ 'Demote' if u.is_admin else 'Make Admin' }}
+                                    </button>
+                                </form>
+
+                                <!-- Status Toggle -->
+                                <form method="POST" action="{{ url_for('api.admin_user_status', user_id=u._id) }}" style="display:inline;">
+                                    <input type="hidden" name="approved" value="{{ 'false' if u.approved else 'true' }}">
+                                    <button type="submit" class="btn btn-sm {{ 'btn-ghost' if u.approved else 'btn-success' }}" title="{{ 'Deactivate account' if u.approved else 'Activate account' }}">
+                                        <i class="fas {{ 'fa-ban' if u.approved else 'fa-unlock' }}"></i>
+                                        {{ 'Deactivate' if u.approved else 'Activate' }}
+                                    </button>
+                                </form>
+
+                                <!-- Delete User -->
+                                {% if u._id != session.get('user_id') %}
+                                <form method="POST" action="{{ url_for('api.admin_user_delete', user_id=u._id) }}" onsubmit="return confirm('Are you sure you want to permanently delete user {{ u.username }}?');" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-ghost" style="color:var(--accent-red);" title="Delete User">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
+<!-- ARTICLES MANAGEMENT TAB -->
+<div id="articlesTab" class="admin-tab-content" style="display:none;">
+    <div class="card">
+        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+                <div class="card-title">Article Repository &amp; Editorial Control</div>
+                <div class="card-subtitle">Create, update, inspect, and delete news articles directly in MongoDB</div>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <input type="text" id="articleSearchInput" onkeyup="filterAdminArticles()" placeholder="Search articles..." class="form-input" style="max-width:240px;font-size:12.5px;padding:6px 12px;">
+                <button onclick="openCreateArticleModal()" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Add Article
+                </button>
+            </div>
+        </div>
+        <div class="data-table-wrap">
+            <table class="data-table" id="adminArticlesTable">
+                <thead>
+                    <tr>
+                        <th>Title &amp; Excerpt</th>
+                        <th>Language</th>
+                        <th>Source / Domain</th>
+                        <th>Published</th>
+                        <th style="text-align:right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for art in articles %}
+                    <tr>
+                        <td>
+                            <div style="max-width:380px;">
+                                <a href="{{ url_for('api.article_detail', identifier=art._id or art.title) }}" style="font-weight:600;font-size:13.5px;color:var(--text-primary);text-decoration:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                    {{ art.title }}
+                                </a>
+                                <div style="font-size:12px;color:var(--text-muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                    {{ art.body | snippet(90) }}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge {% if art.language == 'Arabic' %}badge-green{% elif art.language == 'Russian' %}badge-primary{% else %}badge-blue{% endif %}">
+                                {{ art.language or 'EN' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span style="font-size:12.5px;color:var(--text-secondary);font-weight:500;">
+                                {{ art.source_url | domain_name }}
+                            </span>
+                        </td>
+                        <td>
+                            <span style="font-size:12px;color:var(--text-muted);">
+                                {{ art.publication_date or 'Recent' }}
+                            </span>
+                        </td>
+                        <td style="text-align:right;">
+                            <div style="display:inline-flex;gap:6px;">
+                                <a href="{{ url_for('api.article_detail', identifier=art._id or art.title) }}" class="table-action-btn" title="View Article">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button onclick="openEditArticleModal('{{ art._id }}', '{{ art.title|replace('\'', '\\\'')|replace('\"', '&quot;') }}', '{{ art.language }}', '{{ art.publication_date }}', '{{ art.source_url }}', {{ art.body|tojson }})" class="table-action-btn" title="Edit Article">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <form method="POST" action="{{ url_for('api.admin_article_delete', article_id=art._id) }}" onsubmit="return confirm('Permanently delete this article?');" style="display:inline;">
+                                    <button type="submit" class="table-action-btn" style="color:var(--accent-red);" title="Delete Article">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- CREATE ARTICLE MODAL -->
+<div id="createArticleModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(3px);">
+    <div class="card" style="width:100%;max-width:580px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-xl);padding:24px;border-radius:14px;background:var(--surface);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;border-bottom:1px solid var(--border-light);padding-bottom:12px;">
+            <div style="font-size:16px;font-weight:700;color:var(--text-primary);">Create New News Article</div>
+            <button onclick="closeCreateArticleModal()" style="border:none;background:none;color:var(--text-muted);font-size:18px;cursor:pointer;">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('api.admin_article_new') }}" style="display:flex;flex-direction:column;gap:12px;">
+            <div>
+                <label class="form-label">Article Title</label>
+                <input type="text" name="title" required placeholder="Enter article headline..." class="form-input">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                    <label class="form-label">Language</label>
+                    <select name="language" class="form-select">
+                        <option value="English">English</option>
+                        <option value="Arabic">Arabic (العربية)</option>
+                        <option value="Russian">Russian (Русский)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Publication Date</label>
+                    <input type="text" name="publication_date" placeholder="e.g. 2026-08-28" class="form-input">
+                </div>
+            </div>
+            <div>
+                <label class="form-label">Source URL</label>
+                <input type="url" name="source_url" placeholder="https://example.com/news/article" class="form-input">
+            </div>
+            <div>
+                <label class="form-label">Article Body Content</label>
+                <textarea name="body" required rows="7" placeholder="Paste full article text or paragraphs here..." class="form-textarea"></textarea>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
+                <button type="button" onclick="closeCreateArticleModal()" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Article to Database</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- EDIT ARTICLE MODAL -->
+<div id="editArticleModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(3px);">
+    <div class="card" style="width:100%;max-width:580px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-xl);padding:24px;border-radius:14px;background:var(--surface);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;border-bottom:1px solid var(--border-light);padding-bottom:12px;">
+            <div style="font-size:16px;font-weight:700;color:var(--text-primary);">Edit News Article</div>
+            <button onclick="closeEditArticleModal()" style="border:none;background:none;color:var(--text-muted);font-size:18px;cursor:pointer;">&times;</button>
+        </div>
+        <form id="editArticleForm" method="POST" action="" style="display:flex;flex-direction:column;gap:12px;">
+            <div>
+                <label class="form-label">Article Title</label>
+                <input type="text" name="title" id="editTitle" required class="form-input">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                    <label class="form-label">Language</label>
+                    <select name="language" id="editLanguage" class="form-select">
+                        <option value="English">English</option>
+                        <option value="Arabic">Arabic (العربية)</option>
+                        <option value="Russian">Russian (Русский)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Publication Date</label>
+                    <input type="text" name="publication_date" id="editPubDate" class="form-input">
+                </div>
+            </div>
+            <div>
+                <label class="form-label">Source URL</label>
+                <input type="url" name="source_url" id="editSourceUrl" class="form-input">
+            </div>
+            <div>
+                <label class="form-label">Article Body Content</label>
+                <textarea name="body" id="editBody" required rows="7" class="form-textarea"></textarea>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
+                <button type="button" onclick="closeEditArticleModal()" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Update Article</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function switchAdminTab(tabId, btn) {
+    document.querySelectorAll('.admin-tab-content').forEach(c => c.style.display = 'none');
+    document.querySelectorAll('.admin-tab-btn').forEach(b => {
+        b.style.color = 'var(--text-muted)';
+        b.style.borderBottomColor = 'transparent';
+    });
+    
+    document.getElementById(tabId).style.display = 'block';
+    btn.style.color = 'var(--primary)';
+    btn.style.borderBottomColor = 'var(--primary)';
+}
+
+function filterAdminUsers() {
+    const q = document.getElementById('userSearchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#adminUsersTable tbody tr');
+    rows.forEach(r => {
+        r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+    });
+}
+
+function filterAdminArticles() {
+    const q = document.getElementById('articleSearchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#adminArticlesTable tbody tr');
+    rows.forEach(r => {
+        r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+    });
+}
+
+function openCreateArticleModal() {
+    document.getElementById('createArticleModal').style.display = 'flex';
+}
+function closeCreateArticleModal() {
+    document.getElementById('createArticleModal').style.display = 'none';
+}
+
+function openEditArticleModal(id, title, lang, pubDate, url, body) {
+    document.getElementById('editArticleForm').action = '/admin/article/edit/' + id;
+    document.getElementById('editTitle').value = title;
+    document.getElementById('editLanguage').value = lang || 'English';
+    document.getElementById('editPubDate').value = pubDate || '';
+    document.getElementById('editSourceUrl').value = url || '';
+    document.getElementById('editBody').value = body || '';
+    document.getElementById('editArticleModal').style.display = 'flex';
+}
+function closeEditArticleModal() {
+    document.getElementById('editArticleModal').style.display = 'none';
+}
+</script>
 {% endblock %}

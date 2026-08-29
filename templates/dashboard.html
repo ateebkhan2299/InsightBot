@@ -129,8 +129,9 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <a href="{{ url_for('api.article_detail', title=article.title) }}"
-                           class="news-card-title" style="display:block;text-decoration:none;color:inherit;">
+                        <a href="{{ url_for('api.article_detail', identifier=article._id or article.title) }}"
+                           style="display:block;font-size:13.5px;font-weight:600;color:var(--text-primary);text-decoration:none;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                           title="{{ article.title }}">
                             {{ article.title }}
                         </a>
                         <div class="news-card-snippet">

@@ -14,17 +14,35 @@
         </div>
 
         <div style="padding:0 36px 36px;">
-            <form method="POST" action="{{ url_for('api.register') }}" style="display:flex;flex-direction:column;gap:16px;">
+            <form method="POST" action="{{ url_for('api.register') }}" style="display:flex;flex-direction:column;gap:14px;">
                 <div>
-                    <label class="form-label">Username</label>
-                    <input type="text" name="username" required placeholder="Choose a username"
+                    <label class="form-label">Full Name</label>
+                    <input type="text" name="fullname" required placeholder="e.g. Sarah Connor"
                            class="form-input">
                 </div>
 
                 <div>
-                    <label class="form-label">Password</label>
-                    <input type="password" name="password" required placeholder="Minimum 6 characters"
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="email" required placeholder="name@example.com"
                            class="form-input">
+                </div>
+
+                <div>
+                    <label class="form-label">Username</label>
+                    <input type="text" name="username" required placeholder="Choose a unique username"
+                           class="form-input" minlength="3">
+                </div>
+
+                <div>
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" id="regPassword" required placeholder="Minimum 6 characters"
+                           class="form-input" minlength="6">
+                </div>
+
+                <div>
+                    <label class="form-label">Confirm Password</label>
+                    <input type="password" name="confirm_password" id="regConfirmPassword" required placeholder="Re-enter password"
+                           class="form-input" minlength="6">
                 </div>
 
                 <div style="padding:12px 14px;background:var(--primary-light);border:1px solid var(--primary-mid);border-radius:8px;font-size:13px;color:var(--primary-dark);display:flex;align-items:center;gap:8px;">
@@ -32,13 +50,13 @@
                     <span>Accounts with username <strong>admin</strong> receive instant administrator approval.</span>
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">
-                    Register Account
+                <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;">
+                    Create Account
                     <i class="fas fa-arrow-right" style="font-size:12px;"></i>
                 </button>
             </form>
 
-            <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border-light);text-align:center;font-size:13.5px;color:var(--text-muted);">
+            <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border-light);text-align:center;font-size:13.5px;color:var(--text-muted);">
                 Already registered?
                 <a href="{{ url_for('api.login') }}"
                    style="color:var(--primary);font-weight:600;text-decoration:none;margin-left:4px;">

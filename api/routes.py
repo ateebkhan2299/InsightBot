@@ -6,7 +6,7 @@ import io
 import logging
 from collections import Counter
 from urllib.parse import urlparse
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, send_file
 from bson.objectid import ObjectId
@@ -44,7 +44,13 @@ def enforce_route_authorization():
         flash("Please sign in to access this page.", "warning")
         return redirect(url_for('api.login'))
 
-    admin_endpoints = {'api.admin_dashboard', 'api.approve_user', 'api.api_approve_user'}
+    admin_endpoints = {
+        'api.admin_dashboard', 'api.approve_user', 'api.api_approve_user',
+        'api.admin_user_role', 'api.admin_user_status', 'api.admin_user_delete',
+        'api.admin_article_new', 'api.admin_article_edit', 'api.admin_article_delete',
+        'api.api_pending_users', 'api.api_admin_articles', 'api.api_admin_article_detail',
+        'api.api_admin_user_detail'
+    }
     if endpoint in admin_endpoints and not session.get('is_admin'):
         if request.path.startswith('/api/'):
             return jsonify({"success": False, "error": "Administrator privilege required"}), 403
@@ -117,29 +123,39 @@ def news_explorer():
     )
 
 
-@api_bp.route('/article/<path:title>')
-def article_detail(title):
-    article = article_repository.get_article_by_title(title)
+@api_bp.route('/article/<path:identifier>')
+@api_bp.route('/article/<identifier>')
+def article_detail(identifier):
+    article = article_repository.get_article(identifier)
     if not article:
-        flash("Article not found in database.", "warning")
-        return redirect(url_for('api.news_explorer'))
+        return render_template(
+            'error.html',
+            error_code=404,
+            error_title="Article Not Found",
+            error_message="The requested article may have been removed or is no longer available in the database."
+        ), 404
 
     body_text = article.get('body', '')
-    word_count = len(body_text.split())
-    char_count = len(body_text)
+    word_count = len(body_text.split()) if body_text else 0
+    char_count = len(body_text) if body_text else 0
     paragraphs = [p for p in body_text.split('\n') if len(p.strip()) > 0]
     paragraph_count = len(paragraphs) if paragraphs else max(1, word_count // 50)
 
+    current_id = article.get('_id')
+    current_title = article.get('title')
     related_articles = article_repository.get_by_language(
         article.get('language', 'English'),
-        limit=4
+        limit=6
     )
-    related_articles = [a for a in related_articles if a.get('title') != article.get('title')][:3]
+    related_articles = [
+        a for a in related_articles
+        if (a.get('_id') and a.get('_id') != current_id) or (a.get('title') != current_title)
+    ][:3]
 
     user_id = session.get('user_id')
     is_saved = False
     if user_id:
-        is_saved = saved_article_repository.is_saved(user_id, article.get('title', ''))
+        is_saved = saved_article_repository.is_saved(user_id, current_title or str(current_id))
 
     return render_template(
         'article_detail.html',
@@ -340,7 +356,7 @@ def get_language_statistics():
         count = stats[lang]["count"]
         stats[lang]["percentage"] = round((count / total * 100), 1) if total > 0 else 0
         stats[lang]["keywords"] = [word for word, _ in lang_words[lang].most_common(8)]
-        stats[lang]["domains"] = [dom for dom, _ in lang_domains[lang].most_common(5)]
+        stats[lang]["domains"] = [{"name": dom, "count": cnt} for dom, cnt in lang_domains[lang].most_common(5)]
 
     return stats
 
@@ -710,25 +726,27 @@ def export_data(format_type):
 @api_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
+        ident = (request.form.get('username') or request.form.get('username_or_email') or request.form.get('email') or '').strip()
         password = request.form.get('password', '').strip()
 
-        users = db_connection.get_collection('users')
-        if users is not None:
-            user = users.find_one({'username': username})
-            if user and AuthManager.verify_password(user['password_hash'], user['salt'], password):
-                if not user.get('approved', False):
-                    flash('Account pending administrator approval.', 'warning')
-                else:
-                    session['user_id'] = str(user['_id'])
-                    session['username'] = user['username']
-                    session['is_admin'] = user.get('is_admin', False)
-                    flash(f"Welcome back, {username}!", "success")
-                    return redirect(url_for('api.dashboard'))
+        if not ident or not password:
+            flash('Please enter both your username/email and password.', 'danger')
+            return render_template('login.html', current_page='login')
+
+        user = user_repository.get_user_by_username_or_email(ident)
+        if user and AuthManager.verify_password(user.get('password_hash', ''), user.get('salt', ''), password):
+            if not user.get('approved', False):
+                flash('Account pending administrator approval.', 'warning')
             else:
-                flash('Invalid username or password.', 'danger')
+                session['user_id'] = str(user['_id'])
+                session['username'] = user.get('username')
+                session['email'] = user.get('email', '')
+                session['fullname'] = user.get('fullname', user.get('username', '').capitalize())
+                session['is_admin'] = user.get('is_admin', False)
+                flash(f"Welcome back, {session['fullname']}!", "success")
+                return redirect(url_for('api.dashboard'))
         else:
-            flash('Database connection unavailable.', 'danger')
+            flash('Invalid username/email or password.', 'danger')
 
     return render_template('login.html', current_page='login')
 
@@ -736,36 +754,77 @@ def login():
 @api_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
+        fullname = request.form.get('fullname', '').strip()
+        email = request.form.get('email', '').strip()
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+
+        # Fallback if username wasn't provided directly but email was
+        if not username and email:
+            username = email.split('@')[0]
+        if not fullname and username:
+            fullname = username.capitalize()
 
         if not username or not password:
-            flash('Please enter both username and password.', 'danger')
+            flash('Username and password are required.', 'danger')
             return render_template('register.html', current_page='register')
 
-        users = db_connection.get_collection('users')
-        if users is not None:
-            if users.find_one({'username': re.compile(f'^{re.escape(username)}$', re.I)}):
-                flash('Username already taken. Please choose another.', 'danger')
-            else:
-                pwd_hash, salt = AuthManager.hash_password(password)
-                is_admin = (users.count_documents({}) == 0)
-                users.insert_one({
-                    'username': username,
-                    'password_hash': pwd_hash,
-                    'salt': salt,
-                    'approved': is_admin,
-                    'is_admin': is_admin,
-                    'created_at': datetime.now()
-                })
-                if is_admin:
-                    flash('Admin account created! You can sign in now.', 'success')
-                else:
-                    log_repository.log_event("NEW_USER", f"New user registration request from '{username}' (pending approval)", username)
-                    flash('Registration submitted! Pending administrator approval.', 'success')
-                return redirect(url_for('api.login'))
-        else:
+        if len(username) < 3:
+            flash('Username must be at least 3 characters.', 'danger')
+            return render_template('register.html', current_page='register')
+
+        if email and not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', email):
+            flash('Please enter a valid email address.', 'danger')
+            return render_template('register.html', current_page='register')
+
+        if len(password) < 6:
+            flash('Password must be at least 6 characters.', 'danger')
+            return render_template('register.html', current_page='register')
+
+        if confirm_password and password != confirm_password:
+            flash('Passwords do not match.', 'danger')
+            return render_template('register.html', current_page='register')
+
+        users_coll = db_connection.get_collection('users')
+        if users_coll is None:
             flash('Database connection error.', 'danger')
+            return render_template('register.html', current_page='register')
+
+        # Check duplicate username
+        if user_repository.get_user_by_username(username):
+            flash('Username is already taken. Please choose another.', 'danger')
+            return render_template('register.html', current_page='register')
+
+        # Check duplicate email
+        if email and user_repository.get_user_by_email(email):
+            flash('An account with this email already exists.', 'danger')
+            return render_template('register.html', current_page='register')
+
+        pwd_hash, salt = AuthManager.hash_password(password)
+        total_users = users_coll.count_documents({})
+        is_first_user = (total_users == 0)
+        is_admin_user = is_first_user or (username.lower() == 'admin')
+        is_approved = is_admin_user
+
+        users_coll.insert_one({
+            'fullname': fullname or username.capitalize(),
+            'email': email or f"{username}@insightbot.ai",
+            'username': username,
+            'password_hash': pwd_hash,
+            'salt': salt,
+            'approved': is_approved,
+            'is_admin': is_admin_user,
+            'created_at': datetime.now(timezone.utc)
+        })
+
+        if is_approved:
+            flash('Account created and approved! You can now sign in.', 'success')
+        else:
+            log_repository.log_event("NEW_USER", f"New user registration from '{username}' (pending approval)", username)
+            flash('Registration submitted! Pending administrator approval.', 'success')
+
+        return redirect(url_for('api.login'))
 
     return render_template('register.html', current_page='register')
 
@@ -832,9 +891,17 @@ def admin_dashboard():
         flash('Administrator access required.', 'danger')
         return redirect(url_for('api.dashboard'))
 
-    users_coll = db_connection.get_collection('users')
-    all_users = list(users_coll.find({})) if users_coll is not None else []
-    return render_template('admin.html', users=all_users, current_page='admin')
+    all_users = user_repository.get_all_users()
+    all_articles = article_repository.get_all(limit=100, sort_by="newest")
+    stats = article_repository.get_statistics()
+
+    return render_template(
+        'admin.html',
+        users=all_users,
+        articles=all_articles,
+        stats=stats,
+        current_page='admin'
+    )
 
 
 @api_bp.route('/admin/approve/<user_id>', methods=['POST'])
@@ -843,11 +910,155 @@ def approve_user(user_id):
         flash('Unauthorized access.', 'danger')
         return redirect(url_for('api.dashboard'))
 
-    users = db_connection.get_collection('users')
-    if users is not None:
-        users.update_one({'_id': ObjectId(user_id)}, {'$set': {'approved': True}})
-        log_repository.log_event("USER_APPROVED", f"Admin approved user {user_id}")
+    if user_repository.approve_user(user_id):
+        log_repository.log_event("USER_APPROVED", f"Admin approved user ID {user_id}")
         flash('User account approved successfully.', 'success')
+    else:
+        flash('Failed to approve user account.', 'danger')
+
+    return redirect(url_for('api.admin_dashboard'))
+
+
+@api_bp.route('/admin/users/role/<user_id>', methods=['POST'])
+def admin_user_role(user_id):
+    if not session.get('is_admin'):
+        flash('Unauthorized access.', 'danger')
+        return redirect(url_for('api.dashboard'))
+
+    is_admin = request.form.get('is_admin') in ('true', '1', 'True')
+    if user_id == session.get('user_id') and not is_admin:
+        flash('Cannot demote your own active administrator account.', 'warning')
+        return redirect(url_for('api.admin_dashboard'))
+
+    if user_repository.update_user_role(user_id, is_admin):
+        flash(f"User role updated to {'Administrator' if is_admin else 'Standard User'}.", 'success')
+    else:
+        flash('Failed to update user role.', 'danger')
+
+    return redirect(url_for('api.admin_dashboard'))
+
+
+@api_bp.route('/admin/users/status/<user_id>', methods=['POST'])
+def admin_user_status(user_id):
+    if not session.get('is_admin'):
+        flash('Unauthorized access.', 'danger')
+        return redirect(url_for('api.dashboard'))
+
+    approved = request.form.get('approved') in ('true', '1', 'True')
+    if user_id == session.get('user_id') and not approved:
+        flash('Cannot deactivate your own active account.', 'warning')
+        return redirect(url_for('api.admin_dashboard'))
+
+    if user_repository.toggle_user_status(user_id, approved):
+        flash(f"User account {'approved' if approved else 'deactivated'}.", 'success')
+    else:
+        flash('Failed to change user status.', 'danger')
+
+    return redirect(url_for('api.admin_dashboard'))
+
+
+@api_bp.route('/admin/users/delete/<user_id>', methods=['POST'])
+def admin_user_delete(user_id):
+    if not session.get('is_admin'):
+        flash('Unauthorized access.', 'danger')
+        return redirect(url_for('api.dashboard'))
+
+    if user_id == session.get('user_id'):
+        flash('Cannot delete your own active administrator account.', 'danger')
+        return redirect(url_for('api.admin_dashboard'))
+
+    if user_repository.delete_user(user_id):
+        flash('User account deleted successfully.', 'success')
+    else:
+        flash('Failed to delete user account.', 'danger')
+
+    return redirect(url_for('api.admin_dashboard'))
+
+
+@api_bp.route('/admin/article/new', methods=['POST'])
+def admin_article_new():
+    if not session.get('is_admin'):
+        flash('Unauthorized access.', 'danger')
+        return redirect(url_for('api.dashboard'))
+
+    title = request.form.get('title', '').strip()
+    body = request.form.get('body', '').strip()
+    language = request.form.get('language', 'English').strip()
+    source_url = request.form.get('source_url', '').strip()
+    pub_date = request.form.get('publication_date', 'Recent').strip()
+
+    if not title or not body:
+        flash('Title and article body are required.', 'danger')
+        return redirect(url_for('api.admin_dashboard'))
+
+    article_id = article_repository.create_article({
+        'title': title,
+        'body': body,
+        'language': language,
+        'source_url': source_url,
+        'publication_date': pub_date
+    })
+
+    if article_id:
+        try:
+            export_for_tableau()
+        except Exception:
+            pass
+        flash(f"Article '{title}' created successfully!", 'success')
+    else:
+        flash('Failed to create article.', 'danger')
+
+    return redirect(url_for('api.admin_dashboard'))
+
+
+@api_bp.route('/admin/article/edit/<article_id>', methods=['POST'])
+def admin_article_edit(article_id):
+    if not session.get('is_admin'):
+        flash('Unauthorized access.', 'danger')
+        return redirect(url_for('api.dashboard'))
+
+    title = request.form.get('title', '').strip()
+    body = request.form.get('body', '').strip()
+    language = request.form.get('language', 'English').strip()
+    source_url = request.form.get('source_url', '').strip()
+    pub_date = request.form.get('publication_date', 'Recent').strip()
+
+    if not title or not body:
+        flash('Title and article body are required.', 'danger')
+        return redirect(url_for('api.admin_dashboard'))
+
+    if article_repository.update_article(article_id, {
+        'title': title,
+        'body': body,
+        'language': language,
+        'source_url': source_url,
+        'publication_date': pub_date
+    }):
+        try:
+            export_for_tableau()
+        except Exception:
+            pass
+        flash('Article updated successfully.', 'success')
+    else:
+        flash('Failed to update article.', 'danger')
+
+    return redirect(url_for('api.admin_dashboard'))
+
+
+@api_bp.route('/admin/article/delete/<article_id>', methods=['POST'])
+def admin_article_delete(article_id):
+    if not session.get('is_admin'):
+        flash('Unauthorized access.', 'danger')
+        return redirect(url_for('api.dashboard'))
+
+    if article_repository.delete_article(article_id):
+        try:
+            export_for_tableau()
+        except Exception:
+            pass
+        flash('Article deleted from database.', 'success')
+    else:
+        flash('Failed to delete article.', 'danger')
 
     return redirect(url_for('api.admin_dashboard'))
 
@@ -857,12 +1068,10 @@ def api_approve_user(user_id):
     if not session.get('is_admin'):
         return jsonify({"success": False, "error": "Unauthorized"}), 403
 
-    users = db_connection.get_collection('users')
-    if users is not None:
-        users.update_one({'_id': ObjectId(user_id)}, {'$set': {'approved': True}})
+    if user_repository.approve_user(user_id):
         log_repository.log_event("USER_APPROVED", f"Admin approved user ID {user_id}")
         return jsonify({"success": True, "message": "User approved successfully"}), 200
-    return jsonify({"success": False, "error": "Database unavailable"}), 500
+    return jsonify({"success": False, "error": "Database error or user not found"}), 500
 
 
 @api_bp.route('/api/admin/pending-users')
@@ -872,6 +1081,50 @@ def api_pending_users():
 
     pending_users = user_repository.get_pending_users()
     return jsonify({"success": True, "count": len(pending_users), "users": pending_users})
+
+
+@api_bp.route('/api/admin/articles', methods=['GET', 'POST'])
+def api_admin_articles():
+    if not session.get('is_admin'):
+        return jsonify({"success": False, "error": "Unauthorized"}), 403
+
+    if request.method == 'POST':
+        data = request.get_json(silent=True) or request.form
+        title = data.get('title', '').strip()
+        body = data.get('body', '').strip()
+        if not title or not body:
+            return jsonify({"success": False, "error": "Title and body are required"}), 400
+
+        art_id = article_repository.create_article(data)
+        if art_id:
+            return jsonify({"success": True, "article_id": art_id, "message": "Article created"}), 201
+        return jsonify({"success": False, "error": "Failed to create article"}), 500
+
+    articles = article_repository.get_all(limit=100)
+    return jsonify(articles)
+
+
+@api_bp.route('/api/admin/articles/<article_id>', methods=['GET', 'PUT', 'DELETE'])
+def api_admin_article_detail(article_id):
+    if not session.get('is_admin'):
+        return jsonify({"success": False, "error": "Unauthorized"}), 403
+
+    if request.method == 'GET':
+        art = article_repository.get_article(article_id)
+        if art:
+            return jsonify({"success": True, "article": art})
+        return jsonify({"success": False, "error": "Article not found"}), 404
+
+    elif request.method == 'PUT':
+        data = request.get_json(silent=True) or request.form
+        if article_repository.update_article(article_id, data):
+            return jsonify({"success": True, "message": "Article updated successfully"})
+        return jsonify({"success": False, "error": "Update failed"}), 500
+
+    elif request.method == 'DELETE':
+        if article_repository.delete_article(article_id):
+            return jsonify({"success": True, "message": "Article deleted successfully"})
+        return jsonify({"success": False, "error": "Delete failed"}), 500
 
 
 @api_bp.route('/api/cron-scrape', methods=['GET', 'POST'])
