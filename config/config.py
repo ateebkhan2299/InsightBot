@@ -5,8 +5,8 @@ load_dotenv()
 
 
 class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY', 'default_secret_key')
-    MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
+    SECRET_KEY = os.getenv('SECRET_KEY', 'insightbot_production_secure_secret_key_2026_super_secret')
+    MONGO_URI = os.getenv('MONGO_URI', 'mongodb+srv://ateebkhan2299_db_user:ateeb123@cluster0.qbdvyci.mongodb.net/')
     DATABASE_NAME = os.getenv('DATABASE_NAME', 'insightbot_db')
 
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

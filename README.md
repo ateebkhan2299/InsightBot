@@ -22,7 +22,7 @@ pip install -r requirements.txt
 *Ensure you have MongoDB Community Server running locally on port 27017.*
 
 ### 2. Initialize Database & Training Data
-Run the seeder to populate the 40 training URLs and create the initial Admin account (`admin` / `admin123`):
+Run the seeder to populate the 40 training URLs and create the initial Admin account (`admin1513@gmail.com` / `admin1513`):
 ```bash
 python seed_authentic_data.py
 ```

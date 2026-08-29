@@ -28,7 +28,7 @@ def create_app():
 
     if not app.secret_key:
         env_key = os.getenv("SECRET_KEY")
-        app.secret_key = env_key if env_key else secrets.token_hex(32)
+        app.secret_key = env_key if env_key else config.SECRET_KEY
 
     db_connection.connect()
 
