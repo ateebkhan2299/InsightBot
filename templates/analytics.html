@@ -179,9 +179,13 @@
                         </td>
                         <td style="color:var(--text-muted);">2 mins ago</td>
                         <td>
+                            {% if session.get('is_admin') %}
                             <button class="table-action-btn" title="Re-scrape">
                                 <i class="fas fa-redo"></i>
                             </button>
+                            {% else %}
+                            <span class="badge badge-green" style="font-size:11px;">Active</span>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -205,9 +209,13 @@
                         </td>
                         <td style="color:var(--text-muted);">{{ last }}</td>
                         <td>
+                            {% if session.get('is_admin') %}
                             <button class="table-action-btn" title="Re-scrape">
                                 <i class="fas fa-redo"></i>
                             </button>
+                            {% else %}
+                            <span class="badge badge-green" style="font-size:11px;">Active</span>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

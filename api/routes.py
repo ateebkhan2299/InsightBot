@@ -49,10 +49,16 @@ def enforce_route_authorization():
         'api.admin_user_role', 'api.admin_user_status', 'api.admin_user_delete',
         'api.admin_article_new', 'api.admin_article_edit', 'api.admin_article_delete',
         'api.api_pending_users', 'api.api_admin_articles', 'api.api_admin_article_detail',
-        'api.api_admin_user_detail'
+        'api.api_admin_user_detail',
+        'api.scraper_view', 'api.scrape_realtime',
+        'api.api_websites', 'api.api_website_detail', 'api.api_website_pause',
+        'api.api_website_resume', 'api.api_website_scrape', 'api.api_scraping_jobs',
+        'api.pattern_analysis', 'api.evaluation_view', 'api.scheduler_view',
+        'api.data_management', 'api.api_upload_file',
+        'api.settings'
     }
     if endpoint in admin_endpoints and not session.get('is_admin'):
-        if request.path.startswith('/api/'):
+        if request.path.startswith('/api/') or request.is_json:
             return jsonify({"success": False, "error": "Administrator privilege required"}), 403
         flash("Administrator access required.", "danger")
         return redirect(url_for('api.dashboard'))

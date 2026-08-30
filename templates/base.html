@@ -114,12 +114,6 @@
             </a>
             {% endif %}
 
-            <a href="{{ url_for('api.data_management') }}"
-               class="nav-link {% if current_page == 'data' %}active{% endif %}" id="nav-sources">
-                <i class="fas fa-folder"></i>
-                Sources
-            </a>
-
             <a href="{{ url_for('api.languages_view') }}"
                class="nav-link {% if current_page == 'languages' %}active{% endif %}" id="nav-languages">
                 <i class="fas fa-globe"></i>
@@ -130,6 +124,16 @@
                class="nav-link {% if current_page == 'analytics' %}active{% endif %}" id="nav-analytics">
                 <i class="fas fa-chart-bar"></i>
                 Analytics
+            </a>
+
+            {% if session.get('is_admin') %}
+            <div class="nav-divider"></div>
+            <div class="nav-section-label" style="padding:8px 12px 4px;font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Admin Controls</div>
+
+            <a href="{{ url_for('api.data_management') }}"
+               class="nav-link {% if current_page == 'data' %}active{% endif %}" id="nav-sources">
+                <i class="fas fa-folder"></i>
+                Sources
             </a>
 
             <a href="{{ url_for('api.scraper_view') }}"
@@ -144,8 +148,12 @@
                 Extraction Evaluation
             </a>
 
-            {% if session.get('is_admin') %}
-            <div class="nav-divider"></div>
+            <a href="{{ url_for('api.scheduler_view') }}"
+               class="nav-link {% if current_page == 'scheduler' %}active{% endif %}" id="nav-scheduler">
+                <i class="fas fa-clock"></i>
+                Scheduler
+            </a>
+
             <a href="{{ url_for('api.admin_dashboard') }}"
                class="nav-link {% if current_page == 'admin' %}active{% endif %}" id="nav-admin">
                 <i class="fas fa-shield-halved"></i>
@@ -200,7 +208,8 @@
                     <button class="lang-btn {% if current_lang in ['Russian', 'ru', 'RU'] %}active{% endif %}" onclick="setLang('Russian')">RU</button>
                 </div>
 
-                <!-- Notifications -->
+                {% if session.get('is_admin') %}
+                <!-- Notifications (Admin Only) -->
                 <div style="position:relative;">
                     <button class="topbar-icon-btn" id="notifBtn" onclick="toggleNotifications(event)" title="Notifications">
                         <i class="fas fa-bell"></i>
@@ -246,13 +255,11 @@
                             {% endif %}
                         </div>
 
-                        {% if session.get('is_admin') %}
                         <div style="padding-top:10px;border-top:1px solid var(--border-light);margin-top:10px;text-align:center;">
                             <a href="{{ url_for('api.admin_dashboard') }}" style="font-size:12px;font-weight:600;color:var(--primary);text-decoration:none;">
                                 View Admin Control Panel &rarr;
                             </a>
                         </div>
-                        {% endif %}
                     </div>
                 </div>
 
@@ -260,6 +267,7 @@
                 <a href="{{ url_for('api.settings') }}" class="topbar-icon-btn" title="Settings">
                     <i class="fas fa-cog"></i>
                 </a>
+                {% endif %}
 
                 <!-- Avatar -->
                 {% if session.get('user_id') %}
@@ -306,6 +314,7 @@
         </footer>
     </div>
 
+    {% if session.get('is_admin') %}
     <div id="globalScrapeModal" class="modal-backdrop hidden">
         <div class="modal-box">
             <button class="modal-close" onclick="closeScraperModal()">
@@ -340,6 +349,7 @@
             </form>
         </div>
     </div>
+    {% endif %}
 
     <script>
         function toggleSidebar() {

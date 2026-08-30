@@ -1,3 +1,5 @@
+import os
+os.environ['TESTING'] = 'true'
 import pytest
 import urllib.parse
 from app import create_app
@@ -351,7 +353,14 @@ def test_profile_and_settings_persistence(client):
     assert updated_doc['email'] == f"updated_{test_u}@example.com"
     assert AuthManager.verify_password(updated_doc['password_hash'], updated_doc['salt'], 'NewPassword123!')
 
-    # 3. Update Settings
+    # 3. Standard user blocked from Settings
+    resp_settings_blocked = client.get('/settings')
+    assert resp_settings_blocked.status_code == 302
+
+    # 4. Admin can access and update Settings
+    with client.session_transaction() as sess:
+        sess['is_admin'] = True
+
     resp_settings = client.post('/settings', data={
         'theme': 'light',
         'language': 'en',

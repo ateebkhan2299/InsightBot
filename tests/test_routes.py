@@ -1,3 +1,7 @@
+import os
+import sys
+os.environ['TESTING'] = 'true'
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import unittest
 from app import create_app
 from database.mongodb import db_connection
@@ -44,21 +48,53 @@ class TestRoutes(unittest.TestCase):
         rv_ru = self.client.get('/explorer?lang=Russian')
         self.assertEqual(rv_ru.status_code, 200)
 
-    def test_admin_notifications_and_approval(self):
+    def test_user_allowed_pages(self):
+        with self.client.session_transaction() as sess:
+            sess['user_id'] = '64f000000000000000000001'
+            sess['username'] = 'testuser'
+            sess['is_admin'] = False
+
+        allowed_pages = ['/dashboard', '/explorer', '/saved', '/languages', '/analytics', '/profile']
+        for page in allowed_pages:
+            rv = self.client.get(page)
+            self.assertEqual(rv.status_code, 200, f"User should be able to access {page}")
+
+    def test_user_restricted_from_admin_pages_and_apis(self):
+        with self.client.session_transaction() as sess:
+            sess['user_id'] = '64f000000000000000000001'
+            sess['username'] = 'testuser'
+            sess['is_admin'] = False
+
+        restricted_pages = ['/admin', '/data', '/scraper', '/evaluation', '/patterns', '/scheduler', '/settings']
+        for page in restricted_pages:
+            rv = self.client.get(page)
+            self.assertEqual(rv.status_code, 302, f"User should be redirected away from {page}")
+
+        restricted_apis = [
+            ('/api/admin/pending-users', 'GET'),
+            ('/api/websites', 'GET'),
+            ('/api/scraping/jobs', 'GET'),
+            ('/scrape/realtime', 'POST'),
+            ('/api/upload', 'POST')
+        ]
+        for api_path, method in restricted_apis:
+            if method == 'GET':
+                rv = self.client.get(api_path)
+            else:
+                rv = self.client.post(api_path, json={})
+            self.assertEqual(rv.status_code, 403, f"User should get 403 for {api_path}")
+
+    def test_admin_has_full_access(self):
         with self.client.session_transaction() as sess:
             sess['user_id'] = '64f000000000000000000002'
             sess['username'] = 'adminuser'
             sess['is_admin'] = True
 
-        rv_dash = self.client.get('/dashboard')
-        self.assertEqual(rv_dash.status_code, 200)
-        self.assertIn(b'Latest Intelligence', rv_dash.data)
-
-        rv_pending = self.client.get('/api/admin/pending-users')
-        self.assertEqual(rv_pending.status_code, 200)
-        json_data = rv_pending.get_json()
-        self.assertTrue(json_data['success'])
-        self.assertIn('count', json_data)
+        all_pages = ['/dashboard', '/explorer', '/saved', '/languages', '/analytics', '/profile',
+                     '/admin', '/data', '/scraper', '/evaluation', '/patterns', '/scheduler', '/settings']
+        for page in all_pages:
+            rv = self.client.get(page)
+            self.assertEqual(rv.status_code, 200, f"Admin should be able to access {page}")
 
 
 if __name__ == '__main__':

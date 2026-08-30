@@ -143,9 +143,11 @@
             {% else %}
                 <div class="card" style="padding:32px;text-align:center;">
                     <div style="font-size:14px;color:var(--text-muted);">No articles in database yet.</div>
+                    {% if session.get('is_admin') %}
                     <a href="{{ url_for('api.scraper_view') }}" class="btn btn-primary btn-sm" style="margin-top:10px;">
                         Run Scraper
                     </a>
+                    {% endif %}
                 </div>
             {% endif %}
         </div>
@@ -209,10 +211,17 @@
 
             </div>
             <div style="padding:12px 20px;border-top:1px solid var(--border-light);">
+                {% if session.get('is_admin') %}
                 <a href="{{ url_for('api.scheduler_view') }}"
                    style="display:block;text-align:center;padding:9px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;color:var(--text-secondary);text-decoration:none;">
                     View Detailed Logs
                 </a>
+                {% else %}
+                <a href="{{ url_for('api.analytics_view') }}"
+                   style="display:block;text-align:center;padding:9px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;color:var(--text-secondary);text-decoration:none;">
+                    View Detailed Analytics
+                </a>
+                {% endif %}
             </div>
         </div>
 

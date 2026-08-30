@@ -35,7 +35,7 @@ def create_app():
 
     db_connection.connect()
 
-    if not (os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV') or app.config.get('TESTING')):
+    if not (os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV') or app.config.get('TESTING') or os.environ.get('TESTING') == 'true'):
         if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
             try:
                 from scheduler.scheduler import bot_scheduler
