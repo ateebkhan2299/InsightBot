@@ -59,28 +59,30 @@ def scrape_website_job(website_doc: dict):
     status = "success"
 
     try:
-        discovered_links = scraper.crawl_homepage(url, max_links=8)
+        discovered_links = scraper.crawl_source(url, max_links=20)
         articles_found = len(discovered_links)
 
         if not discovered_links:
-            log_repository.log_event("WARNING", "No articles found on homepage", url)
+            log_repository.log_event("WARNING", f"No article links discovered from {name}", url)
         else:
             articles_coll = article_repository.collection
 
             for link in discovered_links:
                 norm_link = normalize_url(link)
+                # Pre-fetch Duplicate Checking against MongoDB
                 if articles_coll is not None:
                     exists = articles_coll.find_one({
                         "$or": [
                             {"source_url": link},
-                            {"normalized_url": norm_link}
+                            {"normalized_url": norm_link},
+                            {"url": link}
                         ]
                     })
                     if exists:
                         duplicate_articles += 1
                         continue
 
-                time.sleep(1.0)
+                time.sleep(0.5)
                 html = scraper.fetch_html(link)
                 if not html:
                     failed_articles += 1
@@ -88,6 +90,10 @@ def scrape_website_job(website_doc: dict):
                     continue
 
                 article = extractor.extract(html, source_url=link)
+
+                # Set source metadata if available
+                if website_doc.get("language"):
+                    article["language"] = article.get("language") or website_doc.get("language")
 
                 if article.get('title') and article.get('body') and article['title'] != "Unknown Title":
                     saved = article_repository.save_to_db(article)
@@ -100,6 +106,8 @@ def scrape_website_job(website_doc: dict):
                         elif ingest_status == "updated":
                             updated_articles += 1
                             log_repository.log_event("SUCCESS", f"Updated: {article['title']}", link)
+                        else:
+                            duplicate_articles += 1
                     else:
                         if ingest_status == "duplicate":
                             duplicate_articles += 1
@@ -108,13 +116,13 @@ def scrape_website_job(website_doc: dict):
                 else:
                     failed_articles += 1
 
-        if failed_articles > 0 and new_articles == 0:
-            status = "partial"
+        if failed_articles > 0 and new_articles == 0 and duplicate_articles == 0:
+            status = "partial" if articles_found > 0 else "failed"
 
     except Exception as exc:
         status = "failed"
         error_message = str(exc)
-        log_repository.log_event("ERROR", f"Scraper failure: {exc}", url)
+        log_repository.log_event("ERROR", f"Scraper failure for {name}: {exc}", url)
 
     end_time = datetime.now(timezone.utc)
     duration = (end_time - start_time).total_seconds()
@@ -144,6 +152,8 @@ def scrape_website_job(website_doc: dict):
                     "last_status": status,
                     "last_error": error_message[:200] if error_message else None,
                     "last_new_articles_count": new_articles,
+                    "last_duplicate_articles_count": duplicate_articles,
+                    "last_articles_found": articles_found,
                     "last_duration": duration
                 }
             }
@@ -155,7 +165,8 @@ def scrape_website_job(website_doc: dict):
         except Exception:
             pass
 
-    log_repository.log_event("JOB_COMPLETE", f"Scraping completed for {name}", url)
+    log_msg = f"Completed {name}: {new_articles} new articles saved, {duplicate_articles} duplicates skipped"
+    log_repository.log_event("JOB_COMPLETE", log_msg, url)
 
 
 class BackgroundScheduler:

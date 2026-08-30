@@ -51,9 +51,7 @@ def enforce_route_authorization():
         'api.api_pending_users', 'api.api_admin_articles', 'api.api_admin_article_detail',
         'api.api_admin_user_detail',
         'api.scraper_view', 'api.scrape_realtime',
-        'api.api_websites', 'api.api_website_detail', 'api.api_website_pause',
-        'api.api_website_resume', 'api.api_website_scrape', 'api.api_scraping_jobs',
-        'api.pattern_analysis', 'api.evaluation_view', 'api.scheduler_view',
+        'api.pattern_analysis', 'api.evaluation_view',
         'api.data_management', 'api.api_upload_file',
         'api.settings'
     }
@@ -272,7 +270,7 @@ def evaluation_view():
 def scheduler_view():
     stats = article_repository.get_statistics()
     websites = source_repository.get_all_sources_full()
-    jobs = scrape_job_repository.get_recent_jobs(limit=25)
+    jobs = scrape_job_repository.get_recent_jobs(limit=50)
 
     from scheduler.scheduler import bot_scheduler
     scheduler_config = {
@@ -284,7 +282,10 @@ def scheduler_view():
         "daemon_mode": True
     }
 
-    recent_logs = log_repository.get_recent_logs(limit=15)
+    total_new_ingested = sum(j.get('new_articles', 0) for j in jobs)
+    total_dups_skipped = sum(j.get('duplicate_articles', 0) for j in jobs)
+
+    recent_logs = log_repository.get_recent_logs(limit=20)
 
     return render_template(
         'scheduler.html',
@@ -293,6 +294,8 @@ def scheduler_view():
         websites=websites,
         jobs=jobs,
         stats=stats,
+        total_new_ingested=total_new_ingested,
+        total_dups_skipped=total_dups_skipped,
         current_page='scheduler'
     )
 

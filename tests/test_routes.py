@@ -54,7 +54,7 @@ class TestRoutes(unittest.TestCase):
             sess['username'] = 'testuser'
             sess['is_admin'] = False
 
-        allowed_pages = ['/dashboard', '/explorer', '/saved', '/languages', '/analytics', '/profile']
+        allowed_pages = ['/dashboard', '/explorer', '/saved', '/languages', '/analytics', '/profile', '/scheduler']
         for page in allowed_pages:
             rv = self.client.get(page)
             self.assertEqual(rv.status_code, 200, f"User should be able to access {page}")
@@ -65,15 +65,13 @@ class TestRoutes(unittest.TestCase):
             sess['username'] = 'testuser'
             sess['is_admin'] = False
 
-        restricted_pages = ['/admin', '/data', '/scraper', '/evaluation', '/patterns', '/scheduler', '/settings']
+        restricted_pages = ['/admin', '/data', '/scraper', '/evaluation', '/patterns', '/settings']
         for page in restricted_pages:
             rv = self.client.get(page)
             self.assertEqual(rv.status_code, 302, f"User should be redirected away from {page}")
 
         restricted_apis = [
             ('/api/admin/pending-users', 'GET'),
-            ('/api/websites', 'GET'),
-            ('/api/scraping/jobs', 'GET'),
             ('/scrape/realtime', 'POST'),
             ('/api/upload', 'POST')
         ]
@@ -83,6 +81,21 @@ class TestRoutes(unittest.TestCase):
             else:
                 rv = self.client.post(api_path, json={})
             self.assertEqual(rv.status_code, 403, f"User should get 403 for {api_path}")
+
+    def test_user_can_manage_scheduler_and_sources(self):
+        with self.client.session_transaction() as sess:
+            sess['user_id'] = '64f000000000000000000001'
+            sess['username'] = 'testuser'
+            sess['is_admin'] = False
+
+        rv = self.client.get('/scheduler')
+        self.assertEqual(rv.status_code, 200)
+
+        rv_sites = self.client.get('/api/websites')
+        self.assertEqual(rv_sites.status_code, 200)
+
+        rv_jobs = self.client.get('/api/scraping/jobs')
+        self.assertEqual(rv_jobs.status_code, 200)
 
     def test_admin_has_full_access(self):
         with self.client.session_transaction() as sess:

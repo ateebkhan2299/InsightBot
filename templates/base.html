@@ -126,6 +126,12 @@
                 Analytics
             </a>
 
+            <a href="{{ url_for('api.scheduler_view') }}"
+               class="nav-link {% if current_page == 'scheduler' %}active{% endif %}" id="nav-scheduler">
+                <i class="fas fa-clock"></i>
+                Scheduler
+            </a>
+
             {% if session.get('is_admin') %}
             <div class="nav-divider"></div>
             <div class="nav-section-label" style="padding:8px 12px 4px;font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Admin Controls</div>
@@ -146,12 +152,6 @@
                class="nav-link {% if current_page == 'evaluation' %}active{% endif %}" id="nav-evaluation">
                 <i class="fas fa-check-square"></i>
                 Extraction Evaluation
-            </a>
-
-            <a href="{{ url_for('api.scheduler_view') }}"
-               class="nav-link {% if current_page == 'scheduler' %}active{% endif %}" id="nav-scheduler">
-                <i class="fas fa-clock"></i>
-                Scheduler
             </a>
 
             <a href="{{ url_for('api.admin_dashboard') }}"

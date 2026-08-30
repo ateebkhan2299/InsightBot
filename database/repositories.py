@@ -497,6 +497,10 @@ class SourceRepository:
             for doc in docs:
                 if '_id' in doc:
                     doc['_id'] = str(doc['_id'])
+                doc['last_new_articles_count'] = doc.get('last_new_articles_count', 0)
+                doc['last_duplicate_articles_count'] = doc.get('last_duplicate_articles_count', 0)
+                url_str = (doc.get('url') or '').lower()
+                doc['is_feed'] = ('rss' in url_str or 'feed' in url_str or 'atom' in url_str or url_str.endswith('.xml'))
                 for k, v in doc.items():
                     if isinstance(v, datetime.datetime):
                         doc[k] = v.isoformat()
@@ -507,17 +511,23 @@ class SourceRepository:
         coll = self.collection
         if coll is not None:
             now = datetime.datetime.now(datetime.timezone.utc)
+            url_str = (url or '').lower()
+            is_feed = ('rss' in url_str or 'feed' in url_str or 'atom' in url_str or url_str.endswith('.xml'))
             website_doc = {
                 "name": name,
                 "url": url,
                 "language": language,
                 "active": True,
                 "schedule": schedule_type,
+                "is_feed": is_feed,
+                "feed_type": "rss" if is_feed else "website",
                 "last_scraped_at": None,
                 "next_scrape_at": now,
                 "last_status": "never",
                 "last_error": None,
                 "last_new_articles_count": 0,
+                "last_duplicate_articles_count": 0,
+                "last_articles_found": 0,
                 "last_duration": 0.0
             }
             coll.update_one({"url": url}, {"$set": website_doc}, upsert=True)
