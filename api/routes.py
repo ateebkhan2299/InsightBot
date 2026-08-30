@@ -266,38 +266,7 @@ def evaluation_view():
     )
 
 
-@api_bp.route('/scheduler')
-def scheduler_view():
-    stats = article_repository.get_statistics()
-    websites = source_repository.get_all_sources_full()
-    jobs = scrape_job_repository.get_recent_jobs(limit=50)
 
-    from scheduler.scheduler import bot_scheduler
-    scheduler_config = {
-        "status": "Active" if bot_scheduler.running else "Inactive",
-        "interval_hours": config.SCRAPE_INTERVAL_HOURS,
-        "frequency": f"Every {config.SCRAPE_INTERVAL_HOURS} Hours",
-        "next_run": "Dynamic Scheduler Active",
-        "last_run": "Recent Batch Complete",
-        "daemon_mode": True
-    }
-
-    total_new_ingested = sum(j.get('new_articles', 0) for j in jobs)
-    total_dups_skipped = sum(j.get('duplicate_articles', 0) for j in jobs)
-
-    recent_logs = log_repository.get_recent_logs(limit=20)
-
-    return render_template(
-        'scheduler.html',
-        scheduler=scheduler_config,
-        logs=recent_logs,
-        websites=websites,
-        jobs=jobs,
-        stats=stats,
-        total_new_ingested=total_new_ingested,
-        total_dups_skipped=total_dups_skipped,
-        current_page='scheduler'
-    )
 
 
 @api_bp.route('/data')

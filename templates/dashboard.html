@@ -211,17 +211,10 @@
 
             </div>
             <div style="padding:12px 20px;border-top:1px solid var(--border-light);">
-                {% if session.get('is_admin') %}
-                <a href="{{ url_for('api.scheduler_view') }}"
-                   style="display:block;text-align:center;padding:9px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;color:var(--text-secondary);text-decoration:none;">
-                    View Detailed Logs
-                </a>
-                {% else %}
                 <a href="{{ url_for('api.analytics_view') }}"
                    style="display:block;text-align:center;padding:9px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;color:var(--text-secondary);text-decoration:none;">
                     View Detailed Analytics
                 </a>
-                {% endif %}
             </div>
         </div>
 

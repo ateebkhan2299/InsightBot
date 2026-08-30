@@ -54,7 +54,7 @@ class TestRoutes(unittest.TestCase):
             sess['username'] = 'testuser'
             sess['is_admin'] = False
 
-        allowed_pages = ['/dashboard', '/explorer', '/saved', '/languages', '/analytics', '/profile', '/scheduler']
+        allowed_pages = ['/dashboard', '/explorer', '/saved', '/languages', '/analytics', '/profile']
         for page in allowed_pages:
             rv = self.client.get(page)
             self.assertEqual(rv.status_code, 200, f"User should be able to access {page}")
@@ -82,14 +82,11 @@ class TestRoutes(unittest.TestCase):
                 rv = self.client.post(api_path, json={})
             self.assertEqual(rv.status_code, 403, f"User should get 403 for {api_path}")
 
-    def test_user_can_manage_scheduler_and_sources(self):
+    def test_user_can_manage_sources(self):
         with self.client.session_transaction() as sess:
             sess['user_id'] = '64f000000000000000000001'
             sess['username'] = 'testuser'
             sess['is_admin'] = False
-
-        rv = self.client.get('/scheduler')
-        self.assertEqual(rv.status_code, 200)
 
         rv_sites = self.client.get('/api/websites')
         self.assertEqual(rv_sites.status_code, 200)
@@ -104,7 +101,7 @@ class TestRoutes(unittest.TestCase):
             sess['is_admin'] = True
 
         all_pages = ['/dashboard', '/explorer', '/saved', '/languages', '/analytics', '/profile',
-                     '/admin', '/data', '/scraper', '/evaluation', '/patterns', '/scheduler', '/settings']
+                     '/admin', '/data', '/scraper', '/evaluation', '/patterns', '/settings']
         for page in all_pages:
             rv = self.client.get(page)
             self.assertEqual(rv.status_code, 200, f"Admin should be able to access {page}")
