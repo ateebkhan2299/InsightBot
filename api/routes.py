@@ -897,13 +897,19 @@ def admin_dashboard():
 @api_bp.route('/admin/approve/<user_id>', methods=['POST'])
 def approve_user(user_id):
     if not session.get('is_admin'):
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return jsonify({"success": False, "error": "Unauthorized access."}), 403
         flash('Unauthorized access.', 'danger')
         return redirect(url_for('api.dashboard'))
 
     if user_repository.approve_user(user_id):
         log_repository.log_event("USER_APPROVED", f"Admin approved user ID {user_id}")
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return jsonify({"success": True, "message": "User account approved successfully.", "user_id": user_id}), 200
         flash('User account approved successfully.', 'success')
     else:
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return jsonify({"success": False, "error": "Failed to approve user account."}), 500
         flash('Failed to approve user account.', 'danger')
 
     return redirect(url_for('api.admin_dashboard'))
@@ -912,17 +918,28 @@ def approve_user(user_id):
 @api_bp.route('/admin/users/role/<user_id>', methods=['POST'])
 def admin_user_role(user_id):
     if not session.get('is_admin'):
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return jsonify({"success": False, "error": "Unauthorized access."}), 403
         flash('Unauthorized access.', 'danger')
         return redirect(url_for('api.dashboard'))
 
-    is_admin = request.form.get('is_admin') in ('true', '1', 'True')
+    is_admin_raw = request.json.get('is_admin') if request.is_json else request.form.get('is_admin')
+    is_admin = is_admin_raw in (True, 'true', '1', 'True', 1)
+
     if user_id == session.get('user_id') and not is_admin:
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return jsonify({"success": False, "error": "Cannot demote your own active administrator account."}), 400
         flash('Cannot demote your own active administrator account.', 'warning')
         return redirect(url_for('api.admin_dashboard'))
 
     if user_repository.update_user_role(user_id, is_admin):
-        flash(f"User role updated to {'Administrator' if is_admin else 'Standard User'}.", 'success')
+        msg = f"User role updated to {'Administrator' if is_admin else 'Standard User'}."
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return jsonify({"success": True, "message": msg, "is_admin": is_admin, "user_id": user_id}), 200
+        flash(msg, 'success')
     else:
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return jsonify({"success": False, "error": "Failed to update user role."}), 500
         flash('Failed to update user role.', 'danger')
 
     return redirect(url_for('api.admin_dashboard'))
@@ -931,17 +948,28 @@ def admin_user_role(user_id):
 @api_bp.route('/admin/users/status/<user_id>', methods=['POST'])
 def admin_user_status(user_id):
     if not session.get('is_admin'):
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return jsonify({"success": False, "error": "Unauthorized access."}), 403
         flash('Unauthorized access.', 'danger')
         return redirect(url_for('api.dashboard'))
 
-    approved = request.form.get('approved') in ('true', '1', 'True')
+    approved_raw = request.json.get('approved') if request.is_json else request.form.get('approved')
+    approved = approved_raw in (True, 'true', '1', 'True', 1)
+
     if user_id == session.get('user_id') and not approved:
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return jsonify({"success": False, "error": "Cannot deactivate your own active account."}), 400
         flash('Cannot deactivate your own active account.', 'warning')
         return redirect(url_for('api.admin_dashboard'))
 
     if user_repository.toggle_user_status(user_id, approved):
-        flash(f"User account {'approved' if approved else 'deactivated'}.", 'success')
+        msg = f"User account {'approved' if approved else 'deactivated'}."
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return jsonify({"success": True, "message": msg, "approved": approved, "user_id": user_id}), 200
+        flash(msg, 'success')
     else:
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return jsonify({"success": False, "error": "Failed to change user status."}), 500
         flash('Failed to change user status.', 'danger')
 
     return redirect(url_for('api.admin_dashboard'))
@@ -950,16 +978,25 @@ def admin_user_status(user_id):
 @api_bp.route('/admin/users/delete/<user_id>', methods=['POST'])
 def admin_user_delete(user_id):
     if not session.get('is_admin'):
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return jsonify({"success": False, "error": "Unauthorized access."}), 403
         flash('Unauthorized access.', 'danger')
         return redirect(url_for('api.dashboard'))
 
     if user_id == session.get('user_id'):
-        flash('Cannot delete your own active administrator account.', 'danger')
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return jsonify({"success": False, "error": "Cannot delete your own active administrator account."}), 400
+        flash('Cannot delete your own active administrator account.', 'warning')
         return redirect(url_for('api.admin_dashboard'))
 
     if user_repository.delete_user(user_id):
-        flash('User account deleted successfully.', 'success')
+        log_repository.log_event("USER_DELETED", f"Admin deleted user ID {user_id}")
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return jsonify({"success": True, "message": "User account permanently removed.", "user_id": user_id}), 200
+        flash('User account permanently removed.', 'success')
     else:
+        if request.is_json or request.headers.get('Accept') == 'application/json':
+            return jsonify({"success": False, "error": "Failed to delete user account."}), 500
         flash('Failed to delete user account.', 'danger')
 
     return redirect(url_for('api.admin_dashboard'))

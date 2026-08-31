@@ -437,24 +437,64 @@
         });
 
         async function approveUserQuick(userId, btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            }
             try {
-                const res = await fetch('/api/admin/approve-user/' + userId, { method: 'POST' });
+                const res = await fetch('/api/admin/approve-user/' + userId, { 
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
+                });
                 const data = await res.json();
                 if (data.success) {
                     const item = document.getElementById('notif-user-' + userId);
                     if (item) {
-                        item.style.background = 'var(--accent-green-bg)';
+                        item.style.background = 'var(--accent-green-bg, #D1FAE5)';
                         item.innerHTML = '<span style="color:#065F46;font-size:12px;font-weight:600;"><i class="fas fa-check"></i> Approved</span>';
                     }
+                    
+                    // Update header notification badge
+                    const notifBadge = document.getElementById('notifBadge');
+                    if (notifBadge) {
+                        let count = parseInt(notifBadge.innerText.trim()) || 0;
+                        count = Math.max(0, count - 1);
+                        if (count > 0) {
+                            notifBadge.innerText = count;
+                        } else {
+                            notifBadge.style.display = 'none';
+                        }
+                    }
+
+                    // Update admin table if on admin page
+                    const userRow = document.getElementById('user-row-' + userId);
+                    if (userRow) {
+                        const statusCell = userRow.querySelector('.user-status-badge');
+                        if (statusCell) {
+                            statusCell.innerHTML = '<span class="badge badge-green"><i class="fas fa-check-circle" style="margin-right:3px;"></i> Active</span>';
+                        }
+                        const approveBtn = userRow.querySelector('.btn-approve-user');
+                        if (approveBtn) approveBtn.remove();
+                    }
+
+                    // Update stat card on admin page if present
+                    const statPending = document.getElementById('pendingApprovalCount');
+                    if (statPending) {
+                        let pendingNum = parseInt(statPending.innerText.trim()) || 0;
+                        pendingNum = Math.max(0, pendingNum - 1);
+                        statPending.innerHTML = pendingNum + ' <span style="font-size:14px;font-weight:500;color:var(--text-muted);">Awaiting</span>';
+                    }
                 } else {
-                    btn.disabled = false;
-                    btn.innerText = 'Retry';
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerText = 'Retry';
+                    }
                 }
             } catch(err) {
-                btn.disabled = false;
-                btn.innerText = 'Error';
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = 'Error';
+                }
             }
         }
 

@@ -729,6 +729,8 @@ class UserRepository:
         if '_id' in doc:
             doc['_id'] = str(doc['_id'])
             doc['id'] = doc['_id']
+        doc['approved'] = True if doc.get('approved') in (True, 'True', 'true', 1, '1') else False
+        doc['is_admin'] = True if doc.get('is_admin') in (True, 'True', 'true', 1, '1') else False
         return doc
 
     def get_all_users(self) -> List[Dict[str, Any]]:
@@ -743,7 +745,11 @@ class UserRepository:
         if coll is not None and user_id:
             from bson.objectid import ObjectId
             try:
-                doc = coll.find_one({'_id': ObjectId(user_id)})
+                if ObjectId.is_valid(user_id):
+                    doc = coll.find_one({'_id': ObjectId(user_id)})
+                    if doc:
+                        return self._format_user(doc)
+                doc = coll.find_one({'_id': user_id})
                 return self._format_user(doc)
             except Exception:
                 pass
@@ -775,14 +781,14 @@ class UserRepository:
     def get_pending_users(self) -> List[Dict[str, Any]]:
         coll = self.collection
         if coll is not None:
-            docs = list(coll.find({"approved": False}))
+            docs = list(coll.find({"$or": [{"approved": False}, {"approved": "false"}, {"approved": 0}, {"approved": {"$exists": False}}]}))
             return [self._format_user(d) for d in docs if d]
         return []
 
     def get_pending_count(self) -> int:
         coll = self.collection
         if coll is not None:
-            return coll.count_documents({"approved": False})
+            return coll.count_documents({"$or": [{"approved": False}, {"approved": "false"}, {"approved": 0}, {"approved": {"$exists": False}}]})
         return 0
 
     def approve_user(self, user_id: str) -> bool:
@@ -790,10 +796,14 @@ class UserRepository:
         if coll is not None:
             from bson.objectid import ObjectId
             try:
-                res = coll.update_one({'_id': ObjectId(user_id)}, {'$set': {'approved': True}})
-                return res.modified_count > 0 or res.matched_count > 0
-            except Exception:
-                pass
+                if ObjectId.is_valid(user_id):
+                    res = coll.update_one({'_id': ObjectId(user_id)}, {'$set': {'approved': True}})
+                    if res.matched_count > 0 or res.modified_count > 0:
+                        return True
+                res = coll.update_one({'_id': user_id}, {'$set': {'approved': True}})
+                return res.matched_count > 0 or res.modified_count > 0
+            except Exception as exc:
+                logger.error(f"Error approving user {user_id}: {exc}")
         return False
 
     def toggle_user_status(self, user_id: str, approved: bool) -> bool:
@@ -801,10 +811,14 @@ class UserRepository:
         if coll is not None:
             from bson.objectid import ObjectId
             try:
-                res = coll.update_one({'_id': ObjectId(user_id)}, {'$set': {'approved': approved}})
-                return res.matched_count > 0
-            except Exception:
-                pass
+                if ObjectId.is_valid(user_id):
+                    res = coll.update_one({'_id': ObjectId(user_id)}, {'$set': {'approved': approved}})
+                    if res.matched_count > 0 or res.modified_count > 0:
+                        return True
+                res = coll.update_one({'_id': user_id}, {'$set': {'approved': approved}})
+                return res.matched_count > 0 or res.modified_count > 0
+            except Exception as exc:
+                logger.error(f"Error toggling user status {user_id}: {exc}")
         return False
 
     def update_user_role(self, user_id: str, is_admin: bool) -> bool:
@@ -812,10 +826,14 @@ class UserRepository:
         if coll is not None:
             from bson.objectid import ObjectId
             try:
-                res = coll.update_one({'_id': ObjectId(user_id)}, {'$set': {'is_admin': is_admin}})
-                return res.matched_count > 0
-            except Exception:
-                pass
+                if ObjectId.is_valid(user_id):
+                    res = coll.update_one({'_id': ObjectId(user_id)}, {'$set': {'is_admin': is_admin}})
+                    if res.matched_count > 0 or res.modified_count > 0:
+                        return True
+                res = coll.update_one({'_id': user_id}, {'$set': {'is_admin': is_admin}})
+                return res.matched_count > 0 or res.modified_count > 0
+            except Exception as exc:
+                logger.error(f"Error updating user role {user_id}: {exc}")
         return False
 
     def delete_user(self, user_id: str) -> bool:
@@ -823,10 +841,14 @@ class UserRepository:
         if coll is not None:
             from bson.objectid import ObjectId
             try:
-                res = coll.delete_one({'_id': ObjectId(user_id)})
+                if ObjectId.is_valid(user_id):
+                    res = coll.delete_one({'_id': ObjectId(user_id)})
+                    if res.deleted_count > 0:
+                        return True
+                res = coll.delete_one({'_id': user_id})
                 return res.deleted_count > 0
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.error(f"Error deleting user {user_id}: {exc}")
         return False
 
     def update_profile(self, user_id: str, update_fields: Dict[str, Any]) -> bool:
