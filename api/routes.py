@@ -750,21 +750,33 @@ def register():
         password = request.form.get('password', '').strip()
         confirm_password = request.form.get('confirm_password', '').strip()
 
-        # Fallback if username wasn't provided directly but email was
+        # If username is not explicitly provided, generate automatically from email / fullname
         if not username and email:
-            username = email.split('@')[0]
+            base_user = email.split('@')[0].strip()
+            cleaned_user = re.sub(r'[^a-zA-Z0-9_]', '', base_user) or 'user'
+            candidate = cleaned_user
+            counter = 1
+            while user_repository.get_user_by_username(candidate):
+                candidate = f"{cleaned_user}{counter}"
+                counter += 1
+            username = candidate
+        elif not username and fullname:
+            cleaned_user = re.sub(r'[^a-zA-Z0-9_]', '', fullname.lower().replace(' ', '_')) or 'user'
+            candidate = cleaned_user
+            counter = 1
+            while user_repository.get_user_by_username(candidate):
+                candidate = f"{cleaned_user}{counter}"
+                counter += 1
+            username = candidate
+
         if not fullname and username:
             fullname = username.capitalize()
 
-        if not username or not password:
-            flash('Username and password are required.', 'danger')
+        if not email or not password:
+            flash('Email and password are required.', 'danger')
             return render_template('register.html', current_page='register')
 
-        if len(username) < 3:
-            flash('Username must be at least 3 characters.', 'danger')
-            return render_template('register.html', current_page='register')
-
-        if email and not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', email):
+        if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', email):
             flash('Please enter a valid email address.', 'danger')
             return render_template('register.html', current_page='register')
 
@@ -781,25 +793,20 @@ def register():
             flash('Database connection error.', 'danger')
             return render_template('register.html', current_page='register')
 
-        # Check duplicate username
-        if user_repository.get_user_by_username(username):
-            flash('Username is already taken. Please choose another.', 'danger')
-            return render_template('register.html', current_page='register')
-
         # Check duplicate email
-        if email and user_repository.get_user_by_email(email):
+        if user_repository.get_user_by_email(email):
             flash('An account with this email already exists.', 'danger')
             return render_template('register.html', current_page='register')
 
         pwd_hash, salt = AuthManager.hash_password(password)
         total_users = users_coll.count_documents({})
         is_first_user = (total_users == 0)
-        is_admin_user = is_first_user or (username.lower() in ('admin', 'admin1513')) or (email.lower() == 'admin1513@gmail.com')
+        is_admin_user = is_first_user or (username.lower() in ('admin', 'admin1513')) or (email.lower() in ('admin1513@gmail.com', 'admin@insightbot.ai'))
         is_approved = is_admin_user
 
         users_coll.insert_one({
             'fullname': fullname or username.capitalize(),
-            'email': email or f"{username}@insightbot.ai",
+            'email': email,
             'username': username,
             'password_hash': pwd_hash,
             'salt': salt,
@@ -811,7 +818,7 @@ def register():
         if is_approved:
             flash('Account created and approved! You can now sign in.', 'success')
         else:
-            log_repository.log_event("NEW_USER", f"New user registration from '{username}' (pending approval)", username)
+            log_repository.log_event("NEW_USER", f"New user registration from '{email}' (pending approval)", username)
             flash('Registration submitted! Pending administrator approval.', 'success')
 
         return redirect(url_for('api.login'))
