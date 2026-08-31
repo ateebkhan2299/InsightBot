@@ -24,44 +24,26 @@
 </div>
 
 <!-- STATS METRICS -->
-<div class="grid-4" style="margin-bottom:20px;">
-    <div class="card stat-card">
-        <div class="stat-icon" style="background:var(--primary-light);color:var(--primary);">
-            <i class="fas fa-users"></i>
+<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:16px;margin-bottom:24px;">
+    <div class="stat-card">
+        <div class="stat-card-label">
+            Total Users
+            <div class="stat-card-icon blue"><i class="fas fa-users"></i></div>
         </div>
-        <div>
-            <div class="stat-value">{{ users|length }}</div>
-            <div class="stat-label">Total Users</div>
-        </div>
+        <div class="stat-card-value">{{ users|length }} <span style="font-size:14px;font-weight:500;color:var(--text-muted);">Registered</span></div>
+        <div class="stat-card-meta"><span style="color:var(--primary);font-weight:600;">All platform accounts</span></div>
     </div>
-    <div class="card stat-card">
-        <div class="stat-icon" style="background:rgba(234,88,12,0.1);color:#EA580C;">
-            <i class="fas fa-user-clock"></i>
+
+    <div class="stat-card">
+        <div class="stat-card-label">
+            Pending Approval
+            <div class="stat-card-icon amber"><i class="fas fa-user-clock"></i></div>
         </div>
-        <div>
-            <div class="stat-value">
-                {{ users|selectattr('approved', 'equalto', False)|list|length }}
-            </div>
-            <div class="stat-label">Pending Approval</div>
+        <div class="stat-card-value" style="color:var(--accent-amber,#EA580C);">
+            {{ users|selectattr('approved', 'equalto', False)|list|length }}
+            <span style="font-size:14px;font-weight:500;color:var(--text-muted);">Awaiting</span>
         </div>
-    </div>
-    <div class="card stat-card">
-        <div class="stat-icon" style="background:rgba(16,185,129,0.1);color:#10B981;">
-            <i class="fas fa-newspaper"></i>
-        </div>
-        <div>
-            <div class="stat-value">{{ articles|length }}</div>
-            <div class="stat-label">Total Articles</div>
-        </div>
-    </div>
-    <div class="card stat-card">
-        <div class="stat-icon" style="background:rgba(99,102,241,0.1);color:#6366F1;">
-            <i class="fas fa-database"></i>
-        </div>
-        <div>
-            <div class="stat-value">{{ stats.active_sources_count or 40 }}</div>
-            <div class="stat-label">Active Sources</div>
-        </div>
+        <div class="stat-card-meta"><span>Requires admin moderation</span></div>
     </div>
 </div>
 

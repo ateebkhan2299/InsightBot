@@ -526,6 +526,8 @@ body {
 .stat-card-icon.blue { background: var(--primary-light); color: var(--primary); }
 .stat-card-icon.green { background: var(--accent-green-bg); color: var(--accent-green); }
 .stat-card-icon.navy { background: #EEF2FF; color: var(--accent-navy); }
+.stat-card-icon.amber { background: var(--accent-amber-light, #FEF3C7); color: var(--accent-amber, #D97706); }
+.stat-card-icon.red { background: var(--accent-red-light, #FEE2E2); color: var(--accent-red, #DC2626); }
 
 .stat-card-value {
   font-size: 28px;
@@ -1603,6 +1605,12 @@ body {
 .dark .stat-card-icon.navy {
   background: rgba(30,58,95,0.2);
   color: var(--accent-blue);
+}
+
+[data-theme="dark"] .stat-card-icon.amber,
+.dark .stat-card-icon.amber {
+  background: rgba(245, 158, 11, 0.15);
+  color: #FBBF24;
 }
 
 [data-theme="dark"] .scraper-stat-icon.navy,
